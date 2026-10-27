@@ -5,7 +5,7 @@ function safeUrl(value) {
   try { const url = new URL(value); return ['https:', 'http:'].includes(url.protocol) ? url.href : ''; } catch { return ''; }
 }
 function cover(show, className = '') {
-  const url = /^data:image\/(png|jpeg|webp|gif);base64,[a-z0-9+/=]+$/i.test(show.cover || '') ? show.cover : safeUrl(show.cover);
+  const url = /^(?:data:image\/(?:png|jpeg|webp|gif);base64,[a-z0-9+/=]+|media\/[a-f0-9]{64}\.(?:jpg|png|webp|gif))$/i.test(show.cover || '') ? show.cover : safeUrl(show.cover);
   return `<div class="cover ${className}">${url ? `<img src="${escapeHtml(url)}" alt="${escapeHtml(show.title)}封面" loading="lazy" onerror="this.hidden=true">` : ''}<span class="cover-fallback">暂无封面</span></div>`;
 }
 function render() {
