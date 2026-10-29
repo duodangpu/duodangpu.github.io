@@ -78,7 +78,7 @@ npm run build:notion
 
 2026-10-29 组织站点正式上线，Pages源为GitHub Actions，云端数据测试、双端浏览器测试与部署全部成功。发布记录：https://github.com/duodangpu/duodangpu.github.io/actions/runs/40836457868 。
 
-目前线上使用2026-10-29核对的公开快照，尚未配置NOTION_TOKEN。后续接通Notion自动更新需要：
+组织仓库已配置 `NOTION_TOKEN`，2026-10-29首次手动Notion读取与发布成功：https://github.com/duodangpu/duodangpu.github.io/actions/runs/40842177970 。如需重新配置连接：
 
 1. 在 Notion 创建内部集成，并在三个数据库中添加该连接，授予读取权限。
 2. 在组织网站仓库 `duodangpu/duodangpu.github.io` 的 **Settings → Secrets and variables → Actions** 添加 `NOTION_TOKEN`，不必配置到旧仓库。仓库级 Secret 不会因为复制 Git 历史而自动迁移。
@@ -90,4 +90,4 @@ npm run build:notion
 
 组织站线上1440px/390px实测通过：HTTP200、4张封面正常、首页/节目搜索默认折叠，点击后显示3条张杰节目原视频，观看合集入口正确、无横向溢出及脚本错误。复验可运行 `node tests/live-site.cjs`（需要Playwright和外网权限），默认检查组织网址。截图位于 `test-results/online-*.png`。
 
-上线完成不代表Notion自动同步已经接通；真实Token读取、后续更新与定时同步仍待上述配置和验收。
+真实Notion读取与手动发布已验收。每6小时的定时触发已配置，但首次定时执行尚未实测；GitHub可能延迟或暂停定时任务，失败时保留之前发布的页面。
