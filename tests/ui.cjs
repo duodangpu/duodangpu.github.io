@@ -26,6 +26,8 @@ server.stderr.on('data', chunk => process.stderr.write(chunk));
       const errors = [];
       page.on('pageerror', error => errors.push(error.message));
       await page.goto(url, {waitUntil:'networkidle'});
+      assert.match(await page.locator('footer').innerText(), /多多想当当/);
+      assert.doesNotMatch(await page.locator('body').innerText(), /小老头|探险家/);
       assert.equal(await page.locator('.work-card').count(), data.works.length);
       assert.equal(await page.locator('.card-body p').count(), 0);
       for (const detail of await page.locator('#live-list details').all()) assert(!await detail.evaluate(element=>element.open), 'Live sessions start collapsed');
