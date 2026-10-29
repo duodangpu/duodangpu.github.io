@@ -74,15 +74,18 @@ npm run build:notion
 
 目标仓库： https://github.com/xiaomishuai/duodangpu 。本地从原 main `66632caf81fad43b6cc060327c3af25b9b93fb3c` 克隆，旧站可通过 Git 历史恢复。
 
-工作流已经写好，尚未在线执行验证。需要仓库所有者完成账户侧配置：
+2026-10-29 首版已正式发布：https://xiaomishuai.github.io/duodangpu/ 。发布PR #1已合并，Pages源已设为GitHub Actions，云端数据测试、双端浏览器测试与部署全部成功。发布记录：https://github.com/xiaomishuai/duodangpu/actions/runs/40831988373 。
+
+目前线上使用2026-10-29核对的公开快照，尚未配置NOTION_TOKEN。后续接通Notion自动更新需要：
 
 1. 在 Notion 创建内部集成，并在三个数据库中添加该连接，授予读取权限。
 2. 在 GitHub 仓库 **Settings → Secrets and variables → Actions** 添加 `NOTION_TOKEN`。
-3. 在 **Settings → Pages → Build and deployment** 将 Source 设为 **GitHub Actions**。
-4. 将本目录修改提交到仓库 main，然后在 Actions 运行 **Publish 多当铺**，内容来源选 `notion`。首次尚未配置集成时，也可以选择 `snapshot` 发布已核对的首版内容。
+3. 在 Actions 运行 **Publish 多当铺**，内容来源选 `notion`，核验读取最新数据并成功发布。
 
 工作流先构建、运行数据测试和双端浏览器测试，全部通过才部署 `dist/`。推送 main 时已配置 Token 则读取 Notion，否则使用核对过的快照。手动选 `notion` 或定时任务必须成功读取 Notion，缺 Token 就失败，保留线上版本。
 
 定时触发约为北京时间 02:17、08:17、14:17、20:17；GitHub 定时任务可能延迟，也可以手动运行更新。GitHub 对长期无活动的公开仓库可能暂停定时任务，届时在 Actions 恢复即可。这里只是静态页面生成，不运行常驻服务器。
 
-部署成功后应在 https://xiaomishuai.github.io/duodangpu/ 检查首页、手机搜索“张杰”、真实合集入口和节目单。现在不能把本地预览当成已发布版本，也不能把尚未用真实 Token 执行的脚本描述为已经完成线上同步。
+线上1440px/390px实测通过：HTTP200、4张封面正常、首页/节目搜索默认折叠，点击后显示3条张杰节目原视频，观看合集入口正确、无横向溢出及脚本错误。复验可运行 `node tests/live-site.cjs`（需要Playwright和外网权限），截图位于 `test-results/online-*.png`。
+
+上线完成不代表Notion自动同步已经接通；真实Token读取、后续更新与定时同步仍待上述配置和验收。
