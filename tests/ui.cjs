@@ -76,6 +76,7 @@ server.stderr.on('data', chunk => process.stderr.write(chunk));
       await card.click();
       await page.getByRole('button',{name:'关闭',exact:true}).click();
       await page.getByRole('link',{name:'直播回放',exact:true}).click();
+      await page.waitForFunction(() => document.querySelector('nav a[href="#live"]').getAttribute('aria-current') === 'location');
       assert.equal(await page.getByRole('link',{name:'直播回放',exact:true}).getAttribute('aria-current'),'location');
       if (data.lives.length) {
         await page.locator('.live-row').first().click();
