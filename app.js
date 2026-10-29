@@ -136,6 +136,24 @@
       grid.append(card);
     });
   }
+  function showLive(live, button, programs = live.programs || []) {
+    opener = button;
+    document.querySelector('#live-dialog-title').textContent = live.title || `${live.date} 直播`;
+    document.querySelector('#live-dialog-link').replaceChildren(link('观看完整回放 ↗', live.replay, 'watch-link') || node('span', 'pending', '回放待更新'));
+    const fold = liveDialog.querySelector('.live-programs');
+    fold.open = false;
+    fold.querySelector('summary').textContent = `节目单 · ${programs.length}`;
+    const programList = document.querySelector('#live-programs');
+    programList.replaceChildren();
+    programs.forEach(program => {
+      const row = node('li', 'program');
+      row.append(node('span', 'program-title', program.title));
+      row.append(link('原视频 ↗', program.url, 'program-link') || node('span', 'pending', '原视频待补'));
+      programList.append(row);
+    });
+    liveDialog.showModal();
+    document.body.classList.add('dialog-open');
+  }
   function renderLives() {
     const list = document.querySelector('#live-list');
     list.replaceChildren();
@@ -149,18 +167,23 @@
       const matchedPrograms = query ? (live.programs || []).filter(program => matches(program.title, program.searchPinyin)) : [];
       if (matchedPrograms.length) {
         const group = node('section', 'search-live-group');
-        group.append(node('h3', 'search-live-date', live.title || `${live.date} 直播`));
+        const header = node('div', 'search-live-header');
+        const heading = node('h3', 'search-live-date');
+        const details = node('button', 'search-live-detail', live.title || `${live.date} 直播`);
+        details.type = 'button';
+        details.addEventListener('click', () => showLive(live, details));
+        heading.append(details);
+        header.append(heading, link('观看完整回放 ↗', live.replay, 'program-link') || node('span', 'pending', '回放待更新'));
+        group.append(header);
         matchedPrograms.forEach(program => {
           const row = node('div', 'search-program');
           const title = node('span', 'program-title');
           highlight(title, program.title, program.searchTokens);
           row.append(title);
           const actions = node('span', 'search-program-links');
-          const replay = link('观看回放 ↗', live.replay, 'program-link');
           const original = link('原视频 ↗', program.url, 'program-link');
-          if (replay) actions.append(replay);
           if (original) actions.append(original);
-          if (!replay && !original) actions.append(node('span', 'pending', '链接待更新'));
+          if (!original) actions.append(node('span', 'pending', '原视频待补'));
           row.append(actions);
           group.append(row);
         });
@@ -181,24 +204,7 @@
       labels.append(node('span', '', query && !sessionMatch ? `${programs.length} 个匹配` : `${total} 个节目`), node('span', safeUrl(live.replay) ? 'sage' : 'warm', safeUrl(live.replay) ? '回放已更新' : '回放待更新'));
       body.append(name, labels);
       button.append(artwork, body);
-      button.addEventListener('click', () => {
-        opener = button;
-        document.querySelector('#live-dialog-title').textContent = live.title || `${live.date} 直播`;
-        document.querySelector('#live-dialog-link').replaceChildren(link('观看完整回放 ↗', live.replay, 'watch-link') || node('span', 'pending', '回放待更新'));
-        const fold = liveDialog.querySelector('.live-programs');
-        fold.open = false;
-        fold.querySelector('summary').textContent = query && !sessionMatch ? `匹配节目 · ${programs.length}` : `节目单 · ${total}`;
-        const programList = document.querySelector('#live-programs');
-        programList.replaceChildren();
-        programs.forEach(program => {
-          const row = node('li', 'program');
-          row.append(node('span', 'program-title', program.title));
-          row.append(link('原视频 ↗', program.url, 'program-link') || node('span', 'pending', '原视频待补'));
-          programList.append(row);
-        });
-        liveDialog.showModal();
-        document.body.classList.add('dialog-open');
-      });
+      button.addEventListener('click', () => showLive(live, button, programs));
       item.append(button);
       list.append(item);
     });

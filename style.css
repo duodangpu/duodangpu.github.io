@@ -129,7 +129,9 @@ h1 { margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -.5px; line-h
 .live-grid { margin-top: 24px; }
 mark { background: #f9e4a6; color: inherit; border-radius: 3px; }
 .search-live-group { grid-column: 1 / -1; min-width: 0; }
-.search-live-date { margin: 0 0 8px; color: var(--muted); font-size: 13px; font-weight: 550; }
+.search-live-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 16px; margin-bottom: 8px; }
+.search-live-date { margin: 0; font-size: 13px; font-weight: 550; }
+.search-live-detail { border: 0; padding: 5px 0; background: transparent; color: #455d53; font: inherit; text-align: left; text-decoration: underline; text-underline-offset: 4px; }
 .search-program { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--line); line-height: 1.6; overflow-wrap: anywhere; }
 .search-program-links { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px 14px; flex: none; }
 .search-program .pending { flex: none; }
