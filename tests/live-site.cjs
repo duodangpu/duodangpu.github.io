@@ -2,6 +2,7 @@ const assert = require('node:assert/strict');
 const path = require('node:path');
 const {mkdirSync} = require('node:fs');
 const {chromium} = require('playwright');
+const siteUrl = process.env.SITE_URL || 'https://duodangpu.github.io/';
 const output = path.join(__dirname, '../test-results');
 mkdirSync(output, {recursive:true});
 (async () => {
@@ -11,7 +12,7 @@ mkdirSync(output, {recursive:true});
       const page = await browser.newPage({viewport:{width,height:width===1440?1000:844}, reducedMotion:'reduce'});
       const errors = [];
       page.on('pageerror', error=>errors.push(error.message));
-      const response = await page.goto('https://xiaomishuai.github.io/duodangpu/',{waitUntil:'networkidle'});
+      const response = await page.goto(siteUrl,{waitUntil:'networkidle'});
       assert.equal(response.status(),200);
       assert.equal(await page.locator('.work-card').count(),4);
       assert.equal(await page.locator('#live-list details[open]').count(),0);
