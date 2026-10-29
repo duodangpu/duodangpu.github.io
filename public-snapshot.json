@@ -1,0 +1,195 @@
+{
+  "verifiedOn": "2026-10-29",
+  "works": [
+    {
+      "id": "406079822892813b905dd77152c26952",
+      "title": "甄嬛传",
+      "category": "影视剧",
+      "progress": "更新中",
+      "bilibili": "https://www.bilibili.com/video/BV1QWtz6TEU3",
+      "drive": "",
+      "cover": "media/29708dec6a920307ba26d5253f06f786fc9147c0b0dba39007c677c2afca2b53.jpg"
+    },
+    {
+      "id": "40607982289281609948c00dcab2a235",
+      "title": "下一个是谁",
+      "category": "综艺",
+      "progress": "已完结",
+      "bilibili": "https://www.bilibili.com/video/BV1kqYe6QEKn",
+      "drive": "",
+      "cover": "media/0331ee42c9566932150d09eda00da5a60ca114ccbeaa3c100cd94718bb629367.png"
+    },
+    {
+      "id": "40607982289281918d15eadf83f15010",
+      "title": "一年一度喜人大赛第1季",
+      "category": "综艺",
+      "progress": "已完结",
+      "bilibili": "https://www.bilibili.com/video/BV1e5bn6sE3e",
+      "drive": "",
+      "cover": "media/3c9a75e9fc54b1d4d5b98632b8a05dd63df203afbca49fb025a709b7829dcc15.jpg"
+    },
+    {
+      "id": "40607982289281bfb6f6dbdb16b9f5cf",
+      "title": "一年一度喜人大赛第2季",
+      "category": "综艺",
+      "progress": "已完结",
+      "bilibili": "https://www.bilibili.com/video/BV1Sttz6eE6H",
+      "drive": "",
+      "cover": "media/20572764420e3d6d14e72c63af8163070a890649de1c0d7e97ea706e3bb601b0.jpg"
+    }
+  ],
+  "lives": [
+    {
+      "id": "4080798228928153946feec5c776c603",
+      "title": "2026-10-28 直播",
+      "date": "2026-10-28",
+      "replay": "",
+      "programs": [
+        {
+          "id": "40807982289281289cdbe6312ac869c7",
+          "title": "《重返未来：1999》三周年纪念动画：隙光掠影",
+          "url": "https://www.bilibili.com/video/BV1uMo5BYECC/",
+          "minutes": 2,
+          "order": 1,
+          "workIds": []
+        },
+        {
+          "id": "4080798228928134baf9c30706f7af51",
+          "title": "重返未来1999音乐会《门The Doors》",
+          "url": "https://www.bilibili.com/video/BV1THHj6UEeY/",
+          "minutes": 3,
+          "order": 2,
+          "workIds": []
+        },
+        {
+          "id": "4080798228928135ba9fffd6c1d24045",
+          "title": "再见，来亚什基 | 1999音乐会·众声漫游夜",
+          "url": "https://www.bilibili.com/video/BV1DrHQ6QEzz/",
+          "minutes": 3,
+          "order": 3,
+          "workIds": []
+        },
+        {
+          "id": "408079822892810e962ae264743068b2",
+          "title": "相别 | 1999音乐会·众声漫游夜",
+          "url": "https://www.bilibili.com/video/BV1Wxpu6dEWm/",
+          "minutes": 5,
+          "order": 4,
+          "workIds": []
+        },
+        {
+          "id": "408079822892810e8c69c6e58c8b68de",
+          "title": "【张杰】北京鸟巢站·高光回顾",
+          "url": "https://b23.tv/fyl01U7",
+          "minutes": 9,
+          "order": 5,
+          "workIds": []
+        },
+        {
+          "id": "40807982289281bca321ef841eb43d09",
+          "title": "深圳张杰 一路上有你",
+          "url": "https://b23.tv/495znuF",
+          "minutes": 1,
+          "order": 6,
+          "workIds": []
+        },
+        {
+          "id": "40807982289281d79e1ac8d876c286eb",
+          "title": "深圳张杰 分手总要在雨天",
+          "url": "https://b23.tv/ydafUqT",
+          "minutes": 4,
+          "order": 7,
+          "workIds": []
+        },
+        {
+          "id": "408079822892814cb778dbccd9bb74d1",
+          "title": "哲别 亲哥是拳击比赛冠军",
+          "url": "https://www.bilibili.com/video/BV1Ha411c7pB/",
+          "minutes": 11,
+          "order": 8,
+          "workIds": []
+        },
+        {
+          "id": "40807982289281139c98eed36c494fe9",
+          "title": "【高耀太】together中文自制",
+          "url": "https://www.bilibili.com/video/BV1UBxM6zEvP/",
+          "minutes": 3,
+          "order": 9,
+          "workIds": []
+        },
+        {
+          "id": "40807982289281fd9f3be1b40581c888",
+          "title": "<第一次遇见花香的那刻> 正式 MV",
+          "url": "https://www.bilibili.com/video/BV1Aq4y1k7GC/",
+          "minutes": 6,
+          "order": 10,
+          "workIds": []
+        },
+        {
+          "id": "408079822892811a90c2d929946e48d0",
+          "title": "<第一次遇见花香的那刻> 第二季 官方MV 郑宜农 如果你也想起来",
+          "url": "https://www.bilibili.com/video/BV1UwPpeyE43/",
+          "minutes": 4,
+          "order": 11,
+          "workIds": []
+        },
+        {
+          "id": "408079822892811a82b1d64cf1a69a04",
+          "title": "<第一次遇见花香的那刻> 第二季 片头曲 《找到你了》客语版 袁漠遥",
+          "url": "https://www.bilibili.com/video/BV1mnQnY6EAd/",
+          "minutes": 3,
+          "order": 12,
+          "workIds": []
+        },
+        {
+          "id": "40807982289281b48603c17a90c84816",
+          "title": "于贞《粒子们》",
+          "url": "https://www.bilibili.com/video/BV1TA411E7Jr/",
+          "minutes": 4,
+          "order": 13,
+          "workIds": []
+        },
+        {
+          "id": "4080798228928184b0acf2f6f4d335a9",
+          "title": "2025，人类写下了哪些故事",
+          "url": "https://www.bilibili.com/video/BV1GRvzBQEeE/",
+          "minutes": 6,
+          "order": 14,
+          "workIds": []
+        },
+        {
+          "id": "40807982289281ac8f8ed3efaaf3735d",
+          "title": "《一步一手印》",
+          "url": "https://www.bilibili.com/video/BV1Dgnb6DEfp/",
+          "minutes": 5,
+          "order": 15,
+          "workIds": []
+        },
+        {
+          "id": "40807982289281f6a099c3988e6c9c90",
+          "title": "《百战成诗》KPL十周年特别版",
+          "url": "https://b23.tv/TxXnpSy",
+          "minutes": 8,
+          "order": 16,
+          "workIds": []
+        },
+        {
+          "id": "408079822892810d8a16fecfb30a5ed9",
+          "title": "ado3首歌",
+          "url": "",
+          "minutes": 11,
+          "order": 17,
+          "workIds": []
+        },
+        {
+          "id": "408079822892815fb05fe6b480ac1636",
+          "title": "385W粉丝UP主开什么车? 力元君新车首秀！",
+          "url": "https://www.bilibili.com/video/BV1im4y1F7dY/",
+          "minutes": 9,
+          "order": 18,
+          "workIds": []
+        }
+      ]
+    }
+  ]
+}

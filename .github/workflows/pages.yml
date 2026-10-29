@@ -1,0 +1,70 @@
+name: Publish 多当铺
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      source:
+        description: 内容来源（首次可用已核对快照，后续用 Notion）
+        type: choice
+        options: [notion, snapshot]
+        default: notion
+  schedule:
+    - cron: '17 0,6,12,18 * * *'
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Generate public content
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          EVENT: ${{ github.event_name }}
+          SOURCE: ${{ inputs.source }}
+        shell: bash
+        run: |
+          if [ "$SOURCE" = "snapshot" ]; then
+            npm run build
+          elif [ "$EVENT" = "schedule" ] || [ "$SOURCE" = "notion" ] || [ -n "$NOTION_TOKEN" ]; then
+            npm run build:notion
+          else
+            npm run build
+          fi
+      - run: npm test
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:ui
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: screenshots
+          path: test-results/
+          if-no-files-found: ignore
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/deploy-pages@v4
+        id: deployment

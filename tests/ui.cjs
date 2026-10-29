@@ -1,0 +1,124 @@
+const assert = require('node:assert/strict');
+const {readFileSync, mkdirSync} = require('node:fs');
+const path = require('node:path');
+const {spawn} = require('node:child_process');
+const {chromium} = require('playwright');
+const root = path.resolve(__dirname, '..');
+const results = path.join(root, 'test-results');
+mkdirSync(results, {recursive: true});
+const content = readFileSync(path.join(root,'dist/data.js'),'utf8');
+const data = JSON.parse(content.slice('window.SITE_DATA = '.length).trim().replace(/;$/, ''));
+const url = 'http://127.0.0.1:18777/';
+const server = spawn(process.execPath,['scripts/preview.mjs'],{cwd:root,env:{...process.env,PORT:'18777'},stdio:'pipe'});
+server.stderr.on('data', chunk => process.stderr.write(chunk));
+
+(async () => {
+  let browser;
+  try {
+    for (let attempt = 0; attempt < 40; attempt++) {
+      try { if ((await fetch(url)).ok) break; } catch {}
+      if (attempt === 39) throw Error('Preview server did not start');
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    browser = await chromium.launch({headless:true,...(process.env.CHROME_PATH ? {executablePath:process.env.CHROME_PATH} : {})});
+    for (const width of [1440, 768, 390, 320]) {
+      const page = await browser.newPage({viewport:{width,height:width > 650 ? 1000 : 844},reducedMotion:'reduce'});
+      const errors = [];
+      page.on('pageerror', error => errors.push(error.message));
+      await page.goto(url, {waitUntil:'networkidle'});
+      assert.equal(await page.locator('.work-card').count(), data.works.length);
+      assert.equal(await page.locator('.card-body p').count(), 0);
+      for (const detail of await page.locator('#live-list details').all()) assert(!await detail.evaluate(element=>element.open), 'Live sessions start collapsed');
+      const category = data.works[0].category;
+      if (category) {
+        await page.getByRole('button',{name:category,exact:true}).click();
+        assert.equal(await page.locator('.work-card').count(),data.works.filter(work=>work.category===category).length);
+      }
+      await page.getByRole('button',{name:'全部',exact:true}).click();
+      if (width < 651) await page.getByRole('button',{name:'搜索',exact:true}).click();
+      const search = page.getByRole('searchbox');
+      await search.fill(' 张杰 ');
+      const expected = data.lives.flatMap(live=>live.programs).filter(program=>program.title.includes('张杰')).length;
+      assert.equal(await page.locator('#live-list .program').count(),expected);
+      for (const detail of await page.locator('#live-list details').all()) {
+        assert(!await detail.evaluate(element=>element.open), 'Search results start collapsed');
+        assert.equal(await detail.locator('.program:visible').count(), 0);
+        await detail.locator('summary').click();
+        assert(await detail.evaluate(element=>element.open));
+        assert(await detail.locator('.program').first().isVisible());
+      }
+      if (data.lives.length) {
+        await search.fill(data.lives[0].date);
+        for (const detail of await page.locator('#live-list details').all()) assert(!await detail.evaluate(element=>element.open), 'Date search results start collapsed');
+        const sameDate = data.lives.filter(live=>live.date===data.lives[0].date);
+        assert.equal(await page.locator('#live-list .program').count(),sameDate.flatMap(live=>live.programs).length);
+        assert.equal(await page.locator('#live-list .program a').count(),sameDate.flatMap(live=>live.programs).filter(p=>p.url).length);
+        assert.equal(await page.locator('#live-list .watch-link').count(),sameDate.filter(live=>live.replay).length);
+        assert((await page.locator('#live-list .program a').allTextContents()).every(label=>label==='原视频 ↗'));
+      }
+      await search.fill('完全不存在的内容__empty__');
+      assert(await page.locator('#empty-works').isVisible());
+      assert(await page.locator('#empty-live').isVisible());
+      await search.fill('');
+      if (width < 651) {
+        await search.press('Escape');
+        assert.equal(await page.getByRole('button',{name:'搜索',exact:true}).getAttribute('aria-expanded'),'false');
+      }
+      const card = page.locator('.card-open').first();
+      await card.click();
+      assert(await page.getByRole('dialog').isVisible());
+      const first = data.works[0];
+      assert.equal(await page.locator('#dialog-title').innerText(),first.title);
+      assert.equal(await page.locator('#dialog-links a').count(),[first.bilibili,first.drive].filter(Boolean).length);
+      if (first.bilibili) assert.equal(await page.getByRole('link',{name:'B站观看 ↗',exact:true}).getAttribute('href'),first.bilibili);
+      await page.keyboard.press('Escape');
+      assert(await card.evaluate(element=>element===document.activeElement));
+      await card.click();
+      await page.getByRole('button',{name:'关闭',exact:true}).click();
+      await page.getByRole('link',{name:'直播回放',exact:true}).click();
+      assert.equal(await page.getByRole('link',{name:'直播回放',exact:true}).getAttribute('aria-current'),'location');
+      if (data.lives.length) {
+        await page.locator('.live-row').first().click();
+        assert(await page.locator('#live-list details').first().evaluate(element=>element.open));
+        await page.locator('.live-row').first().click();
+      }
+      await page.getByRole('link',{name:'作品',exact:true}).click();
+      for (const image of await page.locator('.work-card img').all()) await image.scrollIntoViewIfNeeded();
+      await page.waitForFunction(()=>[...document.querySelectorAll('.work-card img')].every(image=>image.complete&&image.naturalWidth>0));
+      await page.evaluate(()=>scrollTo(0,0));
+      assert(!await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth));
+      assert(!await page.locator('.card-body').evaluateAll(items=>items.some(item=>item.scrollWidth>item.clientWidth)));
+      await page.screenshot({path:path.join(results,`home-${width}.png`),fullPage:true});
+      if (width===390) {
+        await card.click();
+        await page.screenshot({path:path.join(results,'detail-mobile.png')});
+        await page.keyboard.press('Escape');
+        await page.getByRole('button',{name:'搜索',exact:true}).click();
+        await search.fill('张杰');
+        await page.screenshot({path:path.join(results,'search-mobile.png'),fullPage:true});
+      }
+      assert.deepEqual(errors,[]);
+      console.log(`${width}px: categories, search, real links, replay state, dialog/focus, images and layout passed`);
+      await page.close();
+    }
+    // Data states that are not currently present in the public Notion records.
+    const fixture = await browser.newPage({viewport:{width:320,height:740}});
+    const title = '<img src=x onerror=alert(1)> 很长很长的中文标题用于确认换行';
+    const mock = {works:[{id:'w',title,category:'综艺',progress:'已完结',cover:'media/missing.jpg',bilibili:'javascript:alert(1)',drive:'https://example.com/collection'}],lives:[{id:'l',title:'测试直播',date:'2026-10-28',replay:'https://example.com/reaction',programs:[{title:'相关节目',url:'https://example.com/original',workIds:['w']}]}]};
+    await fixture.route('**/data.js',route=>route.fulfill({contentType:'application/javascript',body:`window.SITE_DATA=${JSON.stringify(mock)};`}));
+    await fixture.goto(url,{waitUntil:'networkidle'});
+    await fixture.waitForFunction(()=>document.querySelectorAll('.work-card img').length===0);
+    assert(await fixture.locator('.cover-fallback').isVisible());
+    assert.equal(await fixture.locator('h2 img').count(),0);
+    await fixture.locator('.card-open').click();
+    assert.equal(await fixture.locator('#dialog-links a').count(),1);
+    assert.equal(await fixture.getByRole('link',{name:'网盘观看 ↗'}).getAttribute('rel'),'noopener noreferrer');
+    assert(!await fixture.locator('.related').evaluate(element=>element.open));
+    await fixture.locator('.related summary').click();
+    assert.equal(await fixture.locator('.related .watch-link').getAttribute('href'),'https://example.com/reaction');
+    assert(!await fixture.evaluate(()=>document.documentElement.scrollWidth>innerWidth));
+    await fixture.getByRole('button',{name:'关闭',exact:true}).click();
+    console.log('Missing cover, XSS text, unsafe URL, long title and collapsed related replays passed');
+    await fixture.close();
+  } finally { if (browser) await browser.close(); server.kill(); }
+})().catch(error=>{console.error(error);process.exitCode=1;});
