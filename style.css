@@ -52,7 +52,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--line); }
   gap: 44px;
 }
 .brand { display: flex; align-items: center; gap: 10px; font-size: 21px; font-weight: 650; white-space: nowrap; }
-.brand-mark { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 10px; background: var(--accent); color: #fff; font-size: 11px; }
+.brand-mark { display: block; width: 32px; height: 32px; border-radius: 10px; object-fit: cover; }
 nav { display: flex; gap: 6px; color: var(--muted); }
 nav a { padding: 9px 13px; border-radius: var(--radius-sm); white-space: nowrap; transition: background var(--duration) var(--ease), color var(--duration) var(--ease); }
 nav a.active { background: var(--surface-hover); color: var(--ink); font-weight: 550; }

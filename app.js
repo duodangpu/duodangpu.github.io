@@ -32,14 +32,16 @@
     element.rel = 'noopener noreferrer';
     return element;
   };
-  function artwork(work) {
+  function artwork(work, eager = false) {
     const frame = node('div', 'artwork');
     const fallback = node('span', 'cover-fallback', work.title);
     frame.append(fallback);
     if (/^media\/[a-zA-Z0-9._-]+$/.test(work.cover || '')) {
       const image = node('img');
       image.alt = `${work.title}封面`;
-      image.loading = 'lazy';
+      image.loading = eager ? 'eager' : 'lazy';
+      image.decoding = 'async';
+      if (eager) image.fetchPriority = 'high';
       image.addEventListener('error', () => image.remove(), {once: true});
       image.addEventListener('load', () => fallback.hidden = true, {once: true});
       image.src = work.cover;
@@ -89,14 +91,14 @@
     const found = works.filter(work => (category === '全部' || work.category === category) && matches(work.title));
     document.querySelector('#work-count').textContent = `${found.length} 部作品`;
     document.querySelector('#empty-works').hidden = found.length > 0;
-    found.forEach(work => {
+    found.forEach((work, index) => {
       const card = node('article', 'work-card');
       const button = node('button', 'card-open');
       button.type = 'button';
       button.setAttribute('aria-label', `查看 ${work.title}`);
       const body = node('div', 'card-body');
       body.append(node('h2', '', work.title), tags(work));
-      button.append(artwork(work), body);
+      button.append(artwork(work, index < 4), body);
       button.addEventListener('click', () => showWork(work, button));
       card.append(button);
       grid.append(card);

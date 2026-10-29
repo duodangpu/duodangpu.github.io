@@ -4,6 +4,7 @@ import {readFile, mkdtemp, mkdir, rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {spawnSync} from 'node:child_process';
+import sharp from 'sharp';
 import {sanitize, serialize, fromNotion, queryAll, notionRequest} from '../scripts/content.mjs';
 import {root, downloadCover} from '../scripts/build.mjs';
 
@@ -99,8 +100,12 @@ test('cover downloader checks MIME and actual signature', async () => {
     await assert.rejects(downloadCover(cover,dir,async () => new Response('<html>',{headers:{'content-type':'image/jpeg'}})), /文件内容/);
     await assert.rejects(downloadCover(cover,dir,async () => new Response('',{headers:{'content-type':'text/html'}})), /图片/);
     await assert.rejects(downloadCover(cover,dir,async () => new Response('',{headers:{'content-type':'image/jpeg','content-length':21*1024*1024}})), /20MB/);
-    const path = await downloadCover(cover,dir,async () => new Response(new Uint8Array([255,216,255,217]),{headers:{'content-type':'image/jpeg'}}));
-    assert.equal(path,'media/w1.jpg');
+    const input = await sharp({create:{width:1400,height:1000,channels:3,background:'#b5d2c2'}}).jpeg().toBuffer();
+    const path = await downloadCover(cover,dir,async () => new Response(input,{headers:{'content-type':'image/jpeg'}}));
+    assert.match(path, /^media\/[a-f0-9]{24}\.webp$/);
+    const metadata = await sharp(await readFile(join(dir,path))).metadata();
+    assert.equal(metadata.format, 'webp');
+    assert.equal(metadata.width, 960);
   } finally { await rm(dir,{recursive:true,force:true}); }
 });
 test('failed live sync preserves the previous built site', async () => {

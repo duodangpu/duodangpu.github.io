@@ -1,10 +1,19 @@
 import {mkdir, mkdtemp, readFile, writeFile, copyFile, rename, rm} from 'node:fs/promises';
 import {fileURLToPath, pathToFileURL} from 'node:url';
 import {dirname, join, resolve} from 'node:path';
+import {createHash} from 'node:crypto';
+import sharp from 'sharp';
 import {sanitize, serialize, sources, fromNotion, notionRequest, queryAll} from './content.mjs';
 
 export const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const types = {'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif'};
+async function optimizeCover(bytes, directory) {
+  const optimized = await sharp(bytes, {animated: true, limitInputPixels: 100000000}).rotate().resize({width: 960, height: 960, fit: 'inside', withoutEnlargement: true}).webp({quality: 80}).toBuffer();
+  const hash = createHash('sha256').update(optimized).digest('hex').slice(0, 24);
+  const path = `media/${hash}.webp`;
+  await writeFile(join(directory, path), optimized);
+  return path;
+}
 export async function downloadCover(cover, directory, fetcher = fetch) {
   const response = await fetcher(cover.url, {signal: AbortSignal.timeout(30000)});
   if (!response.ok) throw Error(`封面下载失败（HTTP ${response.status}）`);
@@ -22,9 +31,7 @@ export async function downloadCover(cover, directory, fetcher = fetch) {
   const bytes = Buffer.concat(chunks);
   const valid = ext === 'jpg' ? bytes[0] === 0xff && bytes[1] === 0xd8 : ext === 'png' ? bytes.subarray(0, 8).equals(Buffer.from([137,80,78,71,13,10,26,10])) : ext === 'webp' ? bytes.toString('ascii', 0, 4) === 'RIFF' && bytes.toString('ascii', 8, 12) === 'WEBP' : /^GIF8[79]a/.test(bytes.toString('ascii', 0, 6));
   if (!valid) throw Error('封面文件内容与图片格式不符');
-  const path = `media/${cover.id}.${ext}`;
-  await writeFile(join(directory, path), bytes);
-  return path;
+  return optimizeCover(bytes, directory);
 }
 export async function build({notion = false} = {}) {
   let data, covers;
@@ -37,11 +44,11 @@ export async function build({notion = false} = {}) {
   const staging = await mkdtemp(join(root, '.build-'));
   try {
     await mkdir(join(staging, 'media'));
-    for (const file of ['index.html', 'app.js', 'style.css', 'icon.svg']) await copyFile(join(root, file), join(staging, file));
+    for (const file of ['index.html', 'app.js', 'style.css', 'brand-icon.png']) await copyFile(join(root, file), join(staging, file));
     if (notion) {
       for (const cover of covers) data.works.find(work => work.id === cover.id).cover = await downloadCover(cover, staging);
     } else {
-      for (const work of data.works) if (work.cover) await copyFile(join(root, work.cover), join(staging, work.cover));
+      for (const work of data.works) if (work.cover) work.cover = await optimizeCover(await readFile(join(root, work.cover)), staging);
     }
     await writeFile(join(staging, 'data.js'), serialize(sanitize(data)));
     await writeFile(join(staging, '.nojekyll'), '');
