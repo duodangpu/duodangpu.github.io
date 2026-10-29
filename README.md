@@ -72,11 +72,11 @@ npm run build:notion
 
 ## GitHub Pages 发布
 
-组织站点仓库： https://github.com/duodangpu/duodangpu.github.io ，目标网址：https://duodangpu.github.io/ 。本地保留 `origin` 指向原仓库，新增 `organization` 指向组织仓库；后续发布使用 `git push organization main`。
+唯一正式仓库： https://github.com/duodangpu/duodangpu.github.io ，唯一正式网址：https://duodangpu.github.io/ 。本地只有 `origin`，指向组织仓库；后续发布使用 `git push origin main`。
 
-原仓库 https://github.com/xiaomishuai/duodangpu 及其 Pages 保留不动。两个仓库不是自动镜像，组织站点后续更新应推送到 `organization`。本地从原 main `66632caf81fad43b6cc060327c3af25b9b93fb3c` 克隆，旧站可通过 Git 历史恢复。
+个人旧仓库已退出维护流程，不在它里面配置 Secret、编辑内容或发布。组织仓库保留旧站主线的完整 Git 历史，包括 `66632caf81fad43b6cc060327c3af25b9b93fb3c` 旧设计，可直接通过历史查看，不需要维持第二套网站或仓库来备份。
 
-2026-10-29 首版已正式发布：https://xiaomishuai.github.io/duodangpu/ 。发布PR #1已合并，Pages源已设为GitHub Actions，云端数据测试、双端浏览器测试与部署全部成功。发布记录：https://github.com/xiaomishuai/duodangpu/actions/runs/40831988373 。
+2026-10-29 组织站点正式上线，Pages源为GitHub Actions，云端数据测试、双端浏览器测试与部署全部成功。发布记录：https://github.com/duodangpu/duodangpu.github.io/actions/runs/40836457868 。
 
 目前线上使用2026-10-29核对的公开快照，尚未配置NOTION_TOKEN。后续接通Notion自动更新需要：
 
@@ -88,6 +88,6 @@ npm run build:notion
 
 定时触发约为北京时间 02:17、08:17、14:17、20:17；GitHub 定时任务可能延迟，也可以手动运行更新。GitHub 对长期无活动的公开仓库可能暂停定时任务，届时在 Actions 恢复即可。这里只是静态页面生成，不运行常驻服务器。
 
-原站线上1440px/390px实测通过：HTTP200、4张封面正常、首页/节目搜索默认折叠，点击后显示3条张杰节目原视频，观看合集入口正确、无横向溢出及脚本错误。复验可运行 `node tests/live-site.cjs`（需要Playwright和外网权限），默认检查新组织网址；可通过 `SITE_URL` 环境变量指定原站。截图位于 `test-results/online-*.png`。
+组织站线上1440px/390px实测通过：HTTP200、4张封面正常、首页/节目搜索默认折叠，点击后显示3条张杰节目原视频，观看合集入口正确、无横向溢出及脚本错误。复验可运行 `node tests/live-site.cjs`（需要Playwright和外网权限），默认检查组织网址。截图位于 `test-results/online-*.png`。
 
 上线完成不代表Notion自动同步已经接通；真实Token读取、后续更新与定时同步仍待上述配置和验收。
