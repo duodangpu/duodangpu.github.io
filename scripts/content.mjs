@@ -78,7 +78,9 @@ export function fromNotion(raw) {
       if (!url.startsWith('https://')) fail('Notion 封面必须为 HTTPS 图片');
       covers.push({id, url});
     }
-    return {id, title: text(required(p, '作品名称', 'title')), category: required(p, '分类', 'select').select?.name || '', progress: text(required(p, '更新进度', 'rich_text')), bilibili: required(p, 'B站Reaction合集', 'url').url, drive: required(p, '网盘Reaction链接', 'url').url, cover: ''};
+    const progress = p['更新进度'];
+    if (!progress || !['select', 'rich_text'].includes(progress.type)) fail('Notion 字段 更新进度 应为 select 或 rich_text');
+    return {id, title: text(required(p, '作品名称', 'title')), category: required(p, '分类', 'select').select?.name || '', progress: progress.type === 'select' ? progress.select?.name || '' : text(progress), bilibili: required(p, 'B站Reaction合集', 'url').url, drive: required(p, '网盘Reaction链接', 'url').url, cover: ''};
   });
   const lives = active(raw.lives).map(page => {
     const p = page.properties;

@@ -48,6 +48,16 @@ const rich = value => [{plain_text: value}];
 function notionFixture() {
   return {works:[{id:'w-1',properties:{'作品名称':field('title',rich('作品')), '封面':field('files',[]),'分类':field('select',{name:'综艺'}),'更新进度':field('rich_text',rich('已完结')),'B站Reaction合集':field('url','https://example.com/collection'),'网盘Reaction链接':field('url',null)}}],lives:[{id:'l-1',properties:{'直播场次':field('title',rich('直播')),'直播日期':field('date',{start:'2026-10-28'}),'B站回放':field('url',null)}}],programs:[{id:'p-1',properties:{'视频标题':field('title',rich('节目')),'所属直播':field('relation',[{id:'l-1'}]),'关联作品':field('relation',[{id:'w-1'}]),'原视频':field('url','https://example.com/original'),'约时长（分钟）':field('number',5),'表内顺序':field('number',1),'推荐人':field('rich_text',rich('不公开'))}}]};
 }
+test('Notion progress supports select and legacy text fields', () => {
+  const raw = notionFixture();
+  assert.equal(fromNotion(raw).data.works[0].progress, '已完结');
+  raw.works[0].properties['更新进度'] = field('select', {name:'更新中'});
+  assert.equal(fromNotion(raw).data.works[0].progress, '更新中');
+  raw.works[0].properties['更新进度'] = field('select', null);
+  assert.equal(fromNotion(raw).data.works[0].progress, '');
+  raw.works[0].properties['更新进度'] = field('number', 1);
+  assert.throws(() => fromNotion(raw), /更新进度/);
+});
 test('Notion conversion requires valid schema and explicit relationships, omits private fields', () => {
   const raw = notionFixture();
   raw.works.push({...structuredClone(raw.works[0]), id:'archived', archived:true});
