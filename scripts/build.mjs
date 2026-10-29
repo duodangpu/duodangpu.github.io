@@ -3,7 +3,7 @@ import {fileURLToPath, pathToFileURL} from 'node:url';
 import {dirname, join, resolve} from 'node:path';
 import {createHash} from 'node:crypto';
 import sharp from 'sharp';
-import {sanitize, serialize, sources, fromNotion, notionRequest, queryAll} from './content.mjs';
+import {sanitize, serialize, sources, aboutPage, fromNotion, parseAbout, notionRequest, queryAll, getAllBlocks} from './content.mjs';
 
 export const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const types = {'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif'};
@@ -14,7 +14,7 @@ async function optimizeCover(bytes, directory) {
   await writeFile(join(directory, path), optimized);
   return path;
 }
-export async function downloadCover(cover, directory, fetcher = fetch) {
+export async function downloadCover(cover, directory, fetcher = fetch, lossless = false) {
   const response = await fetcher(cover.url, {signal: AbortSignal.timeout(30000)});
   if (!response.ok) throw Error(`封面下载失败（HTTP ${response.status}）`);
   const ext = types[response.headers.get('content-type')?.split(';')[0].toLowerCase()];
@@ -31,15 +31,22 @@ export async function downloadCover(cover, directory, fetcher = fetch) {
   const bytes = Buffer.concat(chunks);
   const valid = ext === 'jpg' ? bytes[0] === 0xff && bytes[1] === 0xd8 : ext === 'png' ? bytes.subarray(0, 8).equals(Buffer.from([137,80,78,71,13,10,26,10])) : ext === 'webp' ? bytes.toString('ascii', 0, 4) === 'RIFF' && bytes.toString('ascii', 8, 12) === 'WEBP' : /^GIF8[79]a/.test(bytes.toString('ascii', 0, 6));
   if (!valid) throw Error('封面文件内容与图片格式不符');
-  return optimizeCover(bytes, directory);
+  if (!lossless) return optimizeCover(bytes, directory);
+  const png = await sharp(bytes, {limitInputPixels: 100000000}).rotate().png().toBuffer();
+  const path = `media/${createHash('sha256').update(png).digest('hex').slice(0, 24)}.png`;
+  await writeFile(join(directory, path), png);
+  return path;
 }
 export async function build({notion = false} = {}) {
-  let data, covers;
+  let data, covers, qrUrl;
   // Fetch and validate before touching the last successful artifact.
   if (notion) {
     const request = notionRequest(process.env.NOTION_TOKEN);
     const entries = await Promise.all(Object.entries(sources).map(async ([key, id]) => [key, await queryAll(id, request)]));
     ({data, covers} = fromNotion(Object.fromEntries(entries)));
+    const parsed = parseAbout(await getAllBlocks(aboutPage, request));
+    data.about = parsed.about;
+    qrUrl = parsed.qrUrl;
   } else data = sanitize(JSON.parse(await readFile(join(root, 'public-snapshot.json'), 'utf8')));
   const staging = await mkdtemp(join(root, '.build-'));
   try {
@@ -47,6 +54,7 @@ export async function build({notion = false} = {}) {
     for (const file of ['index.html', 'app.js', 'style.css', 'brand-icon.png']) await copyFile(join(root, file), join(staging, file));
     if (notion) {
       for (const cover of covers) data.works.find(work => work.id === cover.id).cover = await downloadCover(cover, staging);
+      if (qrUrl) data.about.qr = await downloadCover({url: qrUrl}, staging, fetch, true);
     } else {
       for (const work of data.works) if (work.cover) work.cover = await optimizeCover(await readFile(join(root, work.cover)), staging);
     }

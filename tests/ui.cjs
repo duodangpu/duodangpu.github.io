@@ -118,9 +118,13 @@ server.stderr.on('data', chunk => process.stderr.write(chunk));
     // Data states that are not currently present in the public Notion records.
     const fixture = await browser.newPage({viewport:{width:320,height:740}});
     const title = '<img src=x onerror=alert(1)> 很长很长的中文标题用于确认换行';
-    const mock = {works:[{id:'w',title,category:'综艺',progress:'已完结',cover:'media/missing.jpg',bilibili:'javascript:alert(1)',drive:'https://example.com/collection'}],lives:[{id:'l',title:'测试直播',date:'2026-10-28',replay:'https://example.com/reaction',programs:[{title:'相关节目',url:'https://example.com/original',workIds:['w']}]}]};
+    const mock = {works:[{id:'w',title,category:'综艺',progress:'已完结',cover:'media/missing.jpg',bilibili:'javascript:alert(1)',drive:'https://example.com/collection'}],lives:[{id:'l',title:'测试直播',date:'2026-10-28',replay:'https://example.com/reaction',programs:[{title:'相关节目',url:'https://example.com/original',workIds:['w']}]}],about:{intro:'一起看',qr:'media/missing.png',groupUrl:'',accounts:[{name:'测试账号',role:'账号简介',url:'https://example.com/profile'}]}};
     await fixture.route('**/data.js',route=>route.fulfill({contentType:'application/javascript',body:`window.SITE_DATA=${JSON.stringify(mock)};`}));
     await fixture.goto(url,{waitUntil:'networkidle'});
+    assert(await fixture.locator('#about').isVisible());
+    assert.equal(await fixture.locator('#about-intro').innerText(),'一起看');
+    assert.equal(await fixture.getByRole('link',{name:'关注 ↗'}).getAttribute('href'),'https://example.com/profile');
+    assert.equal(await fixture.locator('.about-qr').getAttribute('alt'),'QQ群二维码');
     await fixture.waitForFunction(()=>document.querySelectorAll('.work-card img').length===0);
     assert(await fixture.locator('.cover-fallback').isVisible());
     assert.equal(await fixture.locator('h2 img').count(),0);

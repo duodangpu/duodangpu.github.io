@@ -7,6 +7,7 @@ export const sources = {
   lives: 'ba72d37d-0691-48a5-9ffa-f622354b0a9d',
   programs: 'a5df2d9c-6e1e-4434-82d2-39b282df57a6'
 };
+export const aboutPage = '40807982-2892-81cb-b7ed-cce000e01baa';
 export const cleanId = value => String(value || '').replaceAll('-', '');
 const text = field => (field?.title || field?.rich_text || []).map(part => part.plain_text ?? part.text?.content ?? '').join('');
 const fail = message => { throw new Error(message); };
@@ -53,7 +54,41 @@ export function sanitize(input) {
   }).sort((a, b) => b.date.localeCompare(a.date) || a.id.localeCompare(b.id));
   unique(lives, '直播');
   unique(lives.flatMap(live => live.programs), '节目');
-  return {verifiedOn: dateOnly(input.verifiedOn), works, lives};
+  const rawAbout = input.about;
+  let about = null;
+  if (rawAbout) {
+    const qr = string(rawAbout.qr);
+    if (qr && !/^media\/[a-zA-Z0-9_-]+\.(jpg|jpeg|png|webp|gif)$/.test(qr)) fail('QQ群图片必须是本地 media 文件');
+    about = {intro: string(rawAbout.intro), groupUrl: safeUrl(rawAbout.groupUrl), qr, accounts: (rawAbout.accounts || []).map(account => ({name:string(account.name), url:safeUrl(account.url), role:string(account.role)}))};
+  }
+  return {verifiedOn: dateOnly(input.verifiedOn), works, lives, about};
+}
+export function parseAbout(blocks) {
+  const about = {intro:'', groupUrl:'', qr:'', accounts:[{name:'',url:'',role:''},{name:'',url:'',role:''}]};
+  let section = '';
+  let qrUrl = '';
+  for (const block of blocks) {
+    if (['heading_1', 'heading_2', 'heading_3'].includes(block.type)) { section = text(block[block.type]); continue; }
+    if (block.type === 'image' && section === 'QQ群') {
+      if (qrUrl) fail('关于我们包含多张QQ群图片，请只保留一张');
+      qrUrl = safeUrl(block.image?.[block.image.type]?.url);
+      if (!qrUrl.startsWith('https://')) fail('QQ群图片必须为 HTTPS 图片');
+    }
+    if (block.type !== 'paragraph') continue;
+    const pieces = block.paragraph.rich_text || [];
+    const line = text(block.paragraph);
+    const value = label => line.startsWith(label + '：') ? line.slice(label.length + 1).trim() : null;
+    const linkedValue = label => value(label) === null ? null : (pieces.find(part => part.href)?.href || value(label));
+    if (section === '简介' && value('简介内容') !== null) about.intro = value('简介内容');
+    if (section === 'QQ群' && linkedValue('加入链接') !== null) about.groupUrl = safeUrl(linkedValue('加入链接'));
+    const account = section === 'B站账号一' ? about.accounts[0] : section === 'B站账号二' ? about.accounts[1] : null;
+    if (account) {
+      if (value('账号名称') !== null) account.name = value('账号名称');
+      if (value('账号角色') !== null) account.role = value('账号角色');
+      if (linkedValue('主页链接') !== null) account.url = safeUrl(linkedValue('主页链接'));
+    }
+  }
+  return {about, qrUrl};
 }
 export function serialize(data) {
   const index = title => ({searchPinyin: [pinyin(title, {toneType: 'none'}), pinyin(title, {pattern: 'first', toneType: 'none'})], searchTokens: pinyin(title, {toneType: 'none', type: 'array'})});
@@ -114,11 +149,25 @@ export async function queryAll(id, request) {
   } while (cursor);
   return rows;
 }
+export async function getAllBlocks(id, request) {
+  const blocks = [];
+  const seen = new Set();
+  let cursor;
+  do {
+    const page = await request(`/blocks/${id}/children?page_size=100${cursor ? `&start_cursor=${encodeURIComponent(cursor)}` : ''}`);
+    if (!Array.isArray(page.results)) fail('Notion 页面格式无效');
+    blocks.push(...page.results);
+    if (page.has_more && (!page.next_cursor || seen.has(page.next_cursor))) fail('Notion 页面分页游标缺失或重复');
+    cursor = page.has_more ? page.next_cursor : null;
+    seen.add(cursor);
+  } while (cursor);
+  return blocks;
+}
 export function notionRequest(token, fetcher = fetch, wait = ms => new Promise(resolve => setTimeout(resolve, ms))) {
   if (!token) fail('缺少 NOTION_TOKEN，无法从 Notion 同步；请在 GitHub Actions Secrets 配置。');
   return async (path, body) => {
     for (let attempt = 0; attempt < 4; attempt++) {
-      const response = await fetcher(`https://api.notion.com/v1${path}`, {method: 'POST', headers: {Authorization: `Bearer ${token}`, 'Notion-Version': '2025-09-03', 'Content-Type': 'application/json'}, body: JSON.stringify(body), signal: AbortSignal.timeout(30000)});
+      const response = await fetcher(`https://api.notion.com/v1${path}`, {method: body === undefined ? 'GET' : 'POST', headers: {Authorization: `Bearer ${token}`, 'Notion-Version': '2025-09-03', 'Content-Type': 'application/json'}, ...(body === undefined ? {} : {body: JSON.stringify(body)}), signal: AbortSignal.timeout(30000)});
       if (response.ok) return response.json();
       if ((response.status === 429 || response.status >= 500) && attempt < 3) {
         const delay = Number(response.headers.get('retry-after')) || 2 ** attempt;

@@ -255,13 +255,45 @@
   }
   const updateNavigation = () => {
     for (const item of document.querySelectorAll('nav a')) {
-      const active = item.hash === (location.hash === '#live' ? '#live' : '#works');
+      const active = item.hash === (['#live', '#about'].includes(location.hash) ? location.hash : '#works');
       item.classList.toggle('active', active);
       if (active) item.setAttribute('aria-current', 'location');
       else item.removeAttribute('aria-current');
     }
   };
   window.addEventListener('hashchange', updateNavigation);
+  const about = data.about;
+  if (about && (about.intro || about.qr || about.groupUrl || about.accounts?.some(account => account.name && account.url))) {
+    document.querySelector('#about').hidden = false;
+    document.querySelector('#about-nav').hidden = false;
+    const intro = document.querySelector('#about-intro');
+    intro.textContent = about.intro || '';
+    intro.hidden = !about.intro;
+    const accounts = document.querySelector('#about-accounts');
+    for (const account of about.accounts || []) {
+      if (!account.name || !safeUrl(account.url)) continue;
+      const row = node('div', 'about-account');
+      const identity = node('div', 'about-identity');
+      identity.append(node('strong', '', account.name));
+      if (account.role) identity.append(node('span', '', account.role));
+      row.append(identity, link('关注 ↗', account.url, 'watch-link'));
+      accounts.append(row);
+    }
+    const group = document.querySelector('#about-group');
+    if (about.qr || safeUrl(about.groupUrl)) {
+      const info = node('div', 'about-group-info');
+      info.append(node('h3', '', 'QQ群'));
+      const groupLink = link('加入 ↗', about.groupUrl, 'watch-link');
+      if (groupLink) info.append(groupLink);
+      else if (about.qr) info.append(node('span', 'pending', '扫码加入'));
+      group.append(info);
+      if (/^media\/[a-zA-Z0-9._-]+$/.test(about.qr || '')) {
+        const qr = node('img', 'about-qr');
+        qr.src = about.qr; qr.alt = 'QQ群二维码'; qr.width = 160; qr.height = 160; qr.loading = 'lazy';
+        group.append(qr);
+      }
+    }
+  }
   updateNavigation();
   renderWorks();
   renderLives();

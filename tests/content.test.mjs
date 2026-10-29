@@ -5,7 +5,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {spawnSync} from 'node:child_process';
 import sharp from 'sharp';
-import {sanitize, serialize, fromNotion, queryAll, notionRequest} from '../scripts/content.mjs';
+import {sanitize, serialize, fromNotion, parseAbout, queryAll, getAllBlocks, notionRequest} from '../scripts/content.mjs';
 import {root, downloadCover} from '../scripts/build.mjs';
 
 const snapshot = JSON.parse(await readFile(join(root, 'public-snapshot.json'), 'utf8'));
@@ -46,6 +46,21 @@ test('pagination reads all pages and rejects incomplete or repeating cursors', a
 });
 const field = (type, value) => ({type, [type]: value});
 const rich = value => [{plain_text: value}];
+test('about page only exposes named sections and validates links', async () => {
+  const heading = value => ({type:'heading_2',heading_2:{rich_text:rich(value)}});
+  const paragraph = value => ({type:'paragraph',paragraph:{rich_text:rich(value)}});
+  const blocks = [heading('简介'),paragraph('简介内容：一起看'),heading('QQ群'),paragraph('加入链接：'),{type:'image',image:{type:'file',file:{url:'https://example.com/temporary'}}},heading('B站账号一'),paragraph('账号名称：多多'),paragraph('主页链接：https://example.com/profile'),paragraph('账号角色：大号'),heading('其他'),paragraph('私密内容')];
+  const result = parseAbout(blocks);
+  assert.equal(result.about.intro,'一起看');
+  assert.equal(result.about.accounts[0].url,'https://example.com/profile');
+  assert.equal(result.qrUrl,'https://example.com/temporary');
+  assert(!JSON.stringify(result.about).includes('私密内容'));
+  assert.throws(() => parseAbout([heading('QQ群'),paragraph('加入链接：javascript:alert(1)')]), /链接/);
+  const requests = [];
+  const pages = await getAllBlocks('about', async path => { requests.push(path); return requests.length === 1 ? {results:[blocks[0]],has_more:true,next_cursor:'next'} : {results:[blocks[1]],has_more:false}; });
+  assert.equal(pages.length,2);
+  assert.match(requests[1],/start_cursor=next/);
+});
 function notionFixture() {
   return {works:[{id:'w-1',properties:{'作品名称':field('title',rich('作品')), '封面':field('files',[]),'分类':field('select',{name:'综艺'}),'更新进度':field('rich_text',rich('已完结')),'B站Reaction合集':field('url','https://example.com/collection'),'网盘Reaction链接':field('url',null)}}],lives:[{id:'l-1',properties:{'直播场次':field('title',rich('直播')),'直播日期':field('date',{start:'2026-10-28'}),'B站回放':field('url',null)}}],programs:[{id:'p-1',properties:{'视频标题':field('title',rich('节目')),'所属直播':field('relation',[{id:'l-1'}]),'关联作品':field('relation',[{id:'w-1'}]),'原视频':field('url','https://example.com/original'),'约时长（分钟）':field('number',5),'表内顺序':field('number',1),'推荐人':field('rich_text',rich('不公开'))}}]};
 }
