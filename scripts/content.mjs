@@ -56,8 +56,8 @@ export function sanitize(input) {
   return {verifiedOn: dateOnly(input.verifiedOn), works, lives};
 }
 export function serialize(data) {
-  const index = title => [pinyin(title, {toneType: 'none'}), pinyin(title, {pattern: 'first', toneType: 'none'})];
-  const indexed = {...data, works: data.works.map(work => ({...work, searchPinyin: index(work.title)})), lives: data.lives.map(live => ({...live, searchPinyin: index(live.title), programs: live.programs.map(program => ({...program, searchPinyin: index(program.title)}))}))};
+  const index = title => ({searchPinyin: [pinyin(title, {toneType: 'none'}), pinyin(title, {pattern: 'first', toneType: 'none'})], searchTokens: pinyin(title, {toneType: 'none', type: 'array'})});
+  const indexed = {...data, works: data.works.map(work => ({...work, ...index(work.title)})), lives: data.lives.map(live => ({...live, ...index(live.title), programs: live.programs.map(program => ({...program, ...index(program.title)}))}))};
   return `window.SITE_DATA = ${JSON.stringify(indexed).replaceAll('<', '\\u003c').replaceAll('\u2028', '\\u2028').replaceAll('\u2029', '\\u2029')};\n`;
 }
 const required = (properties, name, type) => {

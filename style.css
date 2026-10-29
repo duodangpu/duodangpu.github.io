@@ -127,6 +127,12 @@ h1 { margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -.5px; line-h
 .live { margin-top: 48px; }
 .live h2 { font-size: 22px; font-weight: 600; margin: 0; }
 .live-grid { margin-top: 24px; }
+mark { background: #f9e4a6; color: inherit; border-radius: 3px; }
+.search-live-group { grid-column: 1 / -1; min-width: 0; }
+.search-live-date { margin: 0 0 8px; color: var(--muted); font-size: 13px; font-weight: 550; }
+.search-program { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--line); line-height: 1.6; overflow-wrap: anywhere; }
+.search-program-links { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px 14px; flex: none; }
+.search-program .pending { flex: none; }
 .live-art { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 8px; background: #e7efeb; color: #426057; }
 .live-art-label { font-size: 11px; font-weight: 700; color: #6f8d81; }
 .live-art-date { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }

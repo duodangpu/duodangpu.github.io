@@ -22,6 +22,31 @@
     const compact = query.replace(/\s+/g, '');
     return normalized(value).includes(query) || (compact && pinyin.some(item => normalized(item).replace(/\s+/g, '').includes(compact)));
   };
+  function highlight(element, value, tokens = []) {
+    const chars = Array.from(value);
+    const query = normalized(search.value);
+    if (!query) { element.textContent = value; return; }
+    const compact = query.replace(/\s+/g, '');
+    let matched = new Set();
+    function find(parts, needle) {
+      let combined = '';
+      const positions = [];
+      parts.forEach((part, index) => {
+        for (const char of normalized(part).replace(/\s+/g, '')) { combined += char; positions.push(index); }
+      });
+      const start = combined.indexOf(needle);
+      return start < 0 ? new Set() : new Set(positions.slice(start, start + needle.length));
+    }
+    matched = find(chars, compact);
+    if (!matched.size && tokens.length === chars.length) {
+      matched = find(tokens, compact);
+      if (!matched.size) matched = find(tokens.map(token => Array.from(token)[0] || ''), compact);
+    }
+    chars.forEach((char, index) => {
+      if (matched.has(index)) element.append(node('mark', '', char));
+      else element.append(document.createTextNode(char));
+    });
+  }
   const safeUrl = value => {
     try {
       const url = new URL(value);
@@ -102,7 +127,9 @@
       button.type = 'button';
       button.setAttribute('aria-label', `查看 ${work.title}`);
       const body = node('div', 'card-body');
-      body.append(node('h2', '', work.title), tags(work));
+      const title = node('h2');
+      highlight(title, work.title, work.searchTokens);
+      body.append(title, tags(work));
       button.append(artwork(work, index < 4), body);
       button.addEventListener('click', () => showWork(work, button));
       card.append(button);
@@ -119,6 +146,27 @@
       const programs = (live.programs || []).filter(program => !query || sessionMatch || matches(program.title, program.searchPinyin));
       if (query && !sessionMatch && !programs.length) return;
       count++;
+      const matchedPrograms = query ? (live.programs || []).filter(program => matches(program.title, program.searchPinyin)) : [];
+      if (matchedPrograms.length) {
+        const group = node('section', 'search-live-group');
+        group.append(node('h3', 'search-live-date', live.title || `${live.date} 直播`));
+        matchedPrograms.forEach(program => {
+          const row = node('div', 'search-program');
+          const title = node('span', 'program-title');
+          highlight(title, program.title, program.searchTokens);
+          row.append(title);
+          const actions = node('span', 'search-program-links');
+          const replay = link('观看回放 ↗', live.replay, 'program-link');
+          const original = link('原视频 ↗', program.url, 'program-link');
+          if (replay) actions.append(replay);
+          if (original) actions.append(original);
+          if (!replay && !original) actions.append(node('span', 'pending', '链接待更新'));
+          row.append(actions);
+          group.append(row);
+        });
+        list.append(group);
+        return;
+      }
       const item = node('article', 'work-card live-card');
       const button = node('button', 'card-open');
       button.type = 'button';
@@ -126,7 +174,8 @@
       const artwork = node('div', 'artwork live-art');
       artwork.append(node('span', 'live-art-label', 'LIVE'), node('span', 'live-art-date', live.date.replaceAll('-', '.')));
       const body = node('div', 'card-body');
-      const name = node('h3', '', live.title || `${live.date} 直播`);
+      const name = node('h3');
+      highlight(name, live.title || `${live.date} 直播`, live.searchTokens);
       const total = live.programs?.length || 0;
       const labels = node('div', 'tags');
       labels.append(node('span', '', query && !sessionMatch ? `${programs.length} 个匹配` : `${total} 个节目`), node('span', safeUrl(live.replay) ? 'sage' : 'warm', safeUrl(live.replay) ? '回放已更新' : '回放待更新'));

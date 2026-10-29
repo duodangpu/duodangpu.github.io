@@ -43,21 +43,18 @@ server.stderr.on('data', chunk => process.stderr.write(chunk));
       await search.fill(' 张杰 ');
       const expected = data.lives.flatMap(live=>live.programs).filter(program=>program.title.includes('张杰')).length;
       const matchingLives = data.lives.filter(live=>live.programs.some(program=>program.title.includes('张杰'))).length;
-      assert.equal(await page.locator('#live-list .live-card').count(),matchingLives);
+      assert.equal(await page.locator('#live-list .search-live-group').count(),matchingLives);
+      assert.equal(await page.locator('#live-list .search-program').count(),expected);
       for (const query of ['zhangjie', 'zj', 'zhang jie']) {
         await search.fill(query);
-        assert.equal(await page.locator('#live-list .live-card').count(),matchingLives);
+        assert.equal(await page.locator('#live-list .search-live-group').count(),matchingLives);
+        assert((await page.locator('#live-list .search-program').count()) >= expected);
+        const zhangjie = page.locator('#live-list .search-program').filter({hasText:'张杰'}).first();
+        assert.equal(await zhangjie.locator('mark').allTextContents().then(parts=>parts.join('')), '张杰');
       }
       if (matchingLives) {
-        const liveCard = page.locator('#live-list .card-open').first();
-        await liveCard.click();
-        assert(await page.locator('#live-dialog').isVisible());
-        assert(!await page.locator('#live-dialog details').evaluate(element=>element.open));
-        assert.equal(await page.locator('#live-programs .program').count(),expected);
-        await page.locator('#live-dialog summary').click();
-        assert(await page.locator('#live-programs .program').first().isVisible());
-        await page.keyboard.press('Escape');
-        assert(await liveCard.evaluate(element=>element===document.activeElement));
+        assert(await page.locator('#live-list .search-program').first().isVisible());
+        assert.equal(await page.locator('#live-list .search-program').filter({hasText:'张杰'}).first().locator('a').innerText(), '原视频 ↗');
       }
       await search.fill('zhenxuanzhuan');
       if (data.works.some(work=>work.title==='甄嬛传')) assert.equal(await page.locator('.work-card:not(.live-card)').count(), 1);
@@ -75,6 +72,7 @@ server.stderr.on('data', chunk => process.stderr.write(chunk));
       assert(await page.locator('#empty-works').isVisible());
       assert(await page.locator('#empty-live').isVisible());
       await search.fill('');
+      assert.equal(await page.locator('#live-list .live-card').count(), data.lives.length);
       if (width < 651) {
         await search.press('Escape');
         assert.equal(await page.getByRole('button',{name:'搜索',exact:true}).getAttribute('aria-expanded'),'false');
@@ -134,6 +132,12 @@ server.stderr.on('data', chunk => process.stderr.write(chunk));
     assert.equal(await fixture.locator('.related .watch-link').getAttribute('href'),'https://example.com/reaction');
     assert(!await fixture.evaluate(()=>document.documentElement.scrollWidth>innerWidth));
     await fixture.locator('#work-dialog .close').click();
+    await fixture.getByRole('button',{name:'搜索',exact:true}).click();
+    await fixture.getByRole('searchbox').fill('相关节目');
+    assert.equal(await fixture.locator('.search-program a').count(),2);
+    assert.equal(await fixture.getByRole('link',{name:'观看回放 ↗'}).getAttribute('href'),'https://example.com/reaction');
+    assert.equal(await fixture.getByRole('link',{name:'原视频 ↗'}).getAttribute('href'),'https://example.com/original');
+    assert(!await fixture.evaluate(()=>document.documentElement.scrollWidth>innerWidth));
     console.log('Missing cover, XSS text, unsafe URL, long title and collapsed related replays passed');
     await fixture.close();
   } finally { if (browser) await browser.close(); server.kill(); }
