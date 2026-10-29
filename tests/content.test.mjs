@@ -92,6 +92,14 @@ test('script serialization cannot terminate a script element', () => {
   assert(!script.includes('\u2028'));
   assert(script.includes('\\u003c'));
 });
+test('public search index includes full pinyin and initials', () => {
+  const input = structuredClone(snapshot);
+  input.works[0].title = '甄嬛传';
+  input.lives[0].programs[0].title = '张杰';
+  const data = JSON.parse(serialize(sanitize(input)).slice('window.SITE_DATA = '.length).trim().replace(/;$/, ''));
+  assert.deepEqual(data.works[0].searchPinyin, ['zhen xuan zhuan', 'z x z']);
+  assert.deepEqual(data.lives[0].programs[0].searchPinyin, ['zhang jie', 'z j']);
+});
 test('cover downloader checks MIME and actual signature', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'duodangpu-cover-'));
   await mkdir(join(dir,'media'));

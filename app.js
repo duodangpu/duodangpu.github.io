@@ -6,6 +6,7 @@
   const filters = document.querySelector('#filters');
   const search = document.querySelector('#search');
   const dialog = document.querySelector('#work-dialog');
+  const liveDialog = document.querySelector('#live-dialog');
   const searchToggle = document.querySelector('.search-toggle');
   let category = '全部';
   let opener;
@@ -16,7 +17,11 @@
     return element;
   };
   const normalized = value => String(value ?? '').normalize('NFKC').trim().toLocaleLowerCase();
-  const matches = value => normalized(value).includes(normalized(search.value));
+  const matches = (value, pinyin = []) => {
+    const query = normalized(search.value);
+    const compact = query.replace(/\s+/g, '');
+    return normalized(value).includes(query) || (compact && pinyin.some(item => normalized(item).replace(/\s+/g, '').includes(compact)));
+  };
   const safeUrl = value => {
     try {
       const url = new URL(value);
@@ -88,7 +93,7 @@
   }
   function renderWorks() {
     grid.replaceChildren();
-    const found = works.filter(work => (category === '全部' || work.category === category) && matches(work.title));
+    const found = works.filter(work => (category === '全部' || work.category === category) && matches(work.title, work.searchPinyin));
     document.querySelector('#work-count').textContent = `${found.length} 部作品`;
     document.querySelector('#empty-works').hidden = found.length > 0;
     found.forEach((work, index) => {
@@ -110,31 +115,42 @@
     let count = 0;
     const query = normalized(search.value);
     lives.forEach(live => {
-      const sessionMatch = matches(`${live.title} ${live.date}`);
-      const programs = (live.programs || []).filter(program => !query || sessionMatch || matches(program.title));
+      const sessionMatch = matches(`${live.title} ${live.date}`, live.searchPinyin);
+      const programs = (live.programs || []).filter(program => !query || sessionMatch || matches(program.title, program.searchPinyin));
       if (query && !sessionMatch && !programs.length) return;
       count++;
-      const item = node('details', 'live-item');
-      const summary = node('summary', 'live-row');
-      const name = node('span', 'live-name', live.title === `${live.date} 直播` ? '直播' : live.title || '直播');
+      const item = node('article', 'work-card live-card');
+      const button = node('button', 'card-open');
+      button.type = 'button';
+      button.setAttribute('aria-label', `查看 ${live.title || live.date}`);
+      const artwork = node('div', 'artwork live-art');
+      artwork.append(node('span', 'live-art-label', 'LIVE'), node('span', 'live-art-date', live.date.replaceAll('-', '.')));
+      const body = node('div', 'card-body');
+      const name = node('h3', '', live.title || `${live.date} 直播`);
       const total = live.programs?.length || 0;
-      name.append(node('small', '', `${query && !sessionMatch ? `${programs.length} / ${total}` : total} 个节目 · ${safeUrl(live.replay) ? '回放已更新' : '回放待更新'}`));
-      const date = node('time', 'date', live.date.replaceAll('-', '.'));
-      date.dateTime = live.date;
-      const arrow = node('span', 'arrow');
-      arrow.setAttribute('aria-hidden', 'true');
-      summary.append(date, name, arrow);
-      const content = node('div', 'live-content');
-      content.append(link('观看完整回放 ↗', live.replay, 'watch-link') || node('span', 'pending', '回放待更新'));
-      const programList = node('ol', 'programs');
-      programs.forEach(program => {
-        const row = node('li', 'program');
-        row.append(node('span', 'program-title', program.title));
-        row.append(link('原视频 ↗', program.url, 'program-link') || node('span', 'pending', '原视频待补'));
-        programList.append(row);
+      const labels = node('div', 'tags');
+      labels.append(node('span', '', query && !sessionMatch ? `${programs.length} 个匹配` : `${total} 个节目`), node('span', safeUrl(live.replay) ? 'sage' : 'warm', safeUrl(live.replay) ? '回放已更新' : '回放待更新'));
+      body.append(name, labels);
+      button.append(artwork, body);
+      button.addEventListener('click', () => {
+        opener = button;
+        document.querySelector('#live-dialog-title').textContent = live.title || `${live.date} 直播`;
+        document.querySelector('#live-dialog-link').replaceChildren(link('观看完整回放 ↗', live.replay, 'watch-link') || node('span', 'pending', '回放待更新'));
+        const fold = liveDialog.querySelector('.live-programs');
+        fold.open = false;
+        fold.querySelector('summary').textContent = query && !sessionMatch ? `匹配节目 · ${programs.length}` : `节目单 · ${total}`;
+        const programList = document.querySelector('#live-programs');
+        programList.replaceChildren();
+        programs.forEach(program => {
+          const row = node('li', 'program');
+          row.append(node('span', 'program-title', program.title));
+          row.append(link('原视频 ↗', program.url, 'program-link') || node('span', 'pending', '原视频待补'));
+          programList.append(row);
+        });
+        liveDialog.showModal();
+        document.body.classList.add('dialog-open');
       });
-      content.append(programList);
-      item.append(summary, content);
+      item.append(button);
       list.append(item);
     });
     document.querySelector('#live-count').textContent = `${count} 场`;
@@ -170,16 +186,18 @@
       searchToggle.focus();
     }
   });
-  dialog.querySelector('.close').addEventListener('click', () => dialog.close());
-  dialog.addEventListener('click', event => {
-    if (event.target !== dialog) return;
-    const rect = dialog.getBoundingClientRect();
-    if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) dialog.close();
-  });
-  dialog.addEventListener('close', () => {
-    document.body.classList.remove('dialog-open');
-    opener?.focus();
-  });
+  for (const panel of [dialog, liveDialog]) {
+    panel.querySelector('.close').addEventListener('click', () => panel.close());
+    panel.addEventListener('click', event => {
+      if (event.target !== panel) return;
+      const rect = panel.getBoundingClientRect();
+      if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) panel.close();
+    });
+    panel.addEventListener('close', () => {
+      document.body.classList.remove('dialog-open');
+      opener?.focus();
+    });
+  }
   const updateNavigation = () => {
     for (const item of document.querySelectorAll('nav a')) {
       const active = item.hash === (location.hash === '#live' ? '#live' : '#works');

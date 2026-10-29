@@ -28,35 +28,48 @@ server.stderr.on('data', chunk => process.stderr.write(chunk));
       await page.goto(url, {waitUntil:'networkidle'});
       assert.match(await page.locator('footer').innerText(), /多多想当当/);
       assert.doesNotMatch(await page.locator('body').innerText(), /小老头|探险家/);
-      assert.equal(await page.locator('.work-card').count(), data.works.length);
+      assert.equal(await page.locator('#work-grid .work-card').count(), data.works.length);
       assert.equal(await page.locator('.card-body p').count(), 0);
-      for (const detail of await page.locator('#live-list details').all()) assert(!await detail.evaluate(element=>element.open), 'Live sessions start collapsed');
+      assert.equal(await page.locator('#live-list .live-card').count(), data.lives.length);
+      assert(!await page.locator('#live-dialog').isVisible());
       const category = data.works[0].category;
       if (category) {
         await page.getByRole('button',{name:category,exact:true}).click();
-        assert.equal(await page.locator('.work-card').count(),data.works.filter(work=>work.category===category).length);
+        assert.equal(await page.locator('#work-grid .work-card').count(),data.works.filter(work=>work.category===category).length);
       }
       await page.getByRole('button',{name:'全部',exact:true}).click();
       if (width < 651) await page.getByRole('button',{name:'搜索',exact:true}).click();
       const search = page.getByRole('searchbox');
       await search.fill(' 张杰 ');
       const expected = data.lives.flatMap(live=>live.programs).filter(program=>program.title.includes('张杰')).length;
-      assert.equal(await page.locator('#live-list .program').count(),expected);
-      for (const detail of await page.locator('#live-list details').all()) {
-        assert(!await detail.evaluate(element=>element.open), 'Search results start collapsed');
-        assert.equal(await detail.locator('.program:visible').count(), 0);
-        await detail.locator('summary').click();
-        assert(await detail.evaluate(element=>element.open));
-        assert(await detail.locator('.program').first().isVisible());
+      const matchingLives = data.lives.filter(live=>live.programs.some(program=>program.title.includes('张杰'))).length;
+      assert.equal(await page.locator('#live-list .live-card').count(),matchingLives);
+      for (const query of ['zhangjie', 'zj', 'zhang jie']) {
+        await search.fill(query);
+        assert.equal(await page.locator('#live-list .live-card').count(),matchingLives);
       }
+      if (matchingLives) {
+        const liveCard = page.locator('#live-list .card-open').first();
+        await liveCard.click();
+        assert(await page.locator('#live-dialog').isVisible());
+        assert(!await page.locator('#live-dialog details').evaluate(element=>element.open));
+        assert.equal(await page.locator('#live-programs .program').count(),expected);
+        await page.locator('#live-dialog summary').click();
+        assert(await page.locator('#live-programs .program').first().isVisible());
+        await page.keyboard.press('Escape');
+        assert(await liveCard.evaluate(element=>element===document.activeElement));
+      }
+      await search.fill('zhenxuanzhuan');
+      if (data.works.some(work=>work.title==='甄嬛传')) assert.equal(await page.locator('.work-card:not(.live-card)').count(), 1);
       if (data.lives.length) {
         await search.fill(data.lives[0].date);
-        for (const detail of await page.locator('#live-list details').all()) assert(!await detail.evaluate(element=>element.open), 'Date search results start collapsed');
         const sameDate = data.lives.filter(live=>live.date===data.lives[0].date);
-        assert.equal(await page.locator('#live-list .program').count(),sameDate.flatMap(live=>live.programs).length);
-        assert.equal(await page.locator('#live-list .program a').count(),sameDate.flatMap(live=>live.programs).filter(p=>p.url).length);
-        assert.equal(await page.locator('#live-list .watch-link').count(),sameDate.filter(live=>live.replay).length);
-        assert((await page.locator('#live-list .program a').allTextContents()).every(label=>label==='原视频 ↗'));
+        assert.equal(await page.locator('#live-list .live-card').count(),sameDate.length);
+        await page.locator('#live-list .card-open').first().click();
+        assert.equal(await page.locator('#live-programs .program').count(),sameDate[0].programs.length);
+        assert.equal(await page.locator('#live-programs .program a').count(),sameDate[0].programs.filter(p=>p.url).length);
+        assert.equal(await page.locator('#live-dialog-link .watch-link').count(),sameDate[0].replay ? 1 : 0);
+        await page.keyboard.press('Escape');
       }
       await search.fill('完全不存在的内容__empty__');
       assert(await page.locator('#empty-works').isVisible());
@@ -66,9 +79,9 @@ server.stderr.on('data', chunk => process.stderr.write(chunk));
         await search.press('Escape');
         assert.equal(await page.getByRole('button',{name:'搜索',exact:true}).getAttribute('aria-expanded'),'false');
       }
-      const card = page.locator('.card-open').first();
+      const card = page.locator('#work-grid .card-open').first();
       await card.click();
-      assert(await page.getByRole('dialog').isVisible());
+      assert(await page.locator('#work-dialog').isVisible());
       const first = data.works[0];
       assert.equal(await page.locator('#dialog-title').innerText(),first.title);
       assert.equal(await page.locator('#dialog-links a').count(),[first.bilibili,first.drive].filter(Boolean).length);
@@ -76,14 +89,14 @@ server.stderr.on('data', chunk => process.stderr.write(chunk));
       await page.keyboard.press('Escape');
       assert(await card.evaluate(element=>element===document.activeElement));
       await card.click();
-      await page.getByRole('button',{name:'关闭',exact:true}).click();
+      await page.locator('#work-dialog').getByRole('button',{name:'关闭',exact:true}).click();
       await page.getByRole('link',{name:'直播回放',exact:true}).click();
       await page.waitForFunction(() => document.querySelector('nav a[href="#live"]').getAttribute('aria-current') === 'location');
       assert.equal(await page.getByRole('link',{name:'直播回放',exact:true}).getAttribute('aria-current'),'location');
       if (data.lives.length) {
-        await page.locator('.live-row').first().click();
-        assert(await page.locator('#live-list details').first().evaluate(element=>element.open));
-        await page.locator('.live-row').first().click();
+        await page.locator('#live-list .card-open').first().click();
+        assert(await page.locator('#live-dialog').isVisible());
+        await page.locator('#live-dialog .close').click();
       }
       await page.getByRole('link',{name:'作品',exact:true}).click();
       for (const image of await page.locator('.work-card img').all()) await image.scrollIntoViewIfNeeded();
@@ -113,14 +126,14 @@ server.stderr.on('data', chunk => process.stderr.write(chunk));
     await fixture.waitForFunction(()=>document.querySelectorAll('.work-card img').length===0);
     assert(await fixture.locator('.cover-fallback').isVisible());
     assert.equal(await fixture.locator('h2 img').count(),0);
-    await fixture.locator('.card-open').click();
+    await fixture.locator('#work-grid .card-open').click();
     assert.equal(await fixture.locator('#dialog-links a').count(),1);
     assert.equal(await fixture.getByRole('link',{name:'网盘观看 ↗'}).getAttribute('rel'),'noopener noreferrer');
     assert(!await fixture.locator('.related').evaluate(element=>element.open));
     await fixture.locator('.related summary').click();
     assert.equal(await fixture.locator('.related .watch-link').getAttribute('href'),'https://example.com/reaction');
     assert(!await fixture.evaluate(()=>document.documentElement.scrollWidth>innerWidth));
-    await fixture.getByRole('button',{name:'关闭',exact:true}).click();
+    await fixture.locator('#work-dialog .close').click();
     console.log('Missing cover, XSS text, unsafe URL, long title and collapsed related replays passed');
     await fixture.close();
   } finally { if (browser) await browser.close(); server.kill(); }

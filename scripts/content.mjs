@@ -1,4 +1,7 @@
+import {customPinyin, pinyin} from 'pinyin-pro';
+
 // The only fields that may leave the content pipeline are listed explicitly here.
+customPinyin({'甄嬛传': 'zhēn xuán zhuàn'});
 export const sources = {
   works: '71db1319-0f9c-4810-8af2-092a12208e26',
   lives: 'ba72d37d-0691-48a5-9ffa-f622354b0a9d',
@@ -53,7 +56,9 @@ export function sanitize(input) {
   return {verifiedOn: dateOnly(input.verifiedOn), works, lives};
 }
 export function serialize(data) {
-  return `window.SITE_DATA = ${JSON.stringify(data).replaceAll('<', '\\u003c').replaceAll('\u2028', '\\u2028').replaceAll('\u2029', '\\u2029')};\n`;
+  const index = title => [pinyin(title, {toneType: 'none'}), pinyin(title, {pattern: 'first', toneType: 'none'})];
+  const indexed = {...data, works: data.works.map(work => ({...work, searchPinyin: index(work.title)})), lives: data.lives.map(live => ({...live, searchPinyin: index(live.title), programs: live.programs.map(program => ({...program, searchPinyin: index(program.title)}))}))};
+  return `window.SITE_DATA = ${JSON.stringify(indexed).replaceAll('<', '\\u003c').replaceAll('\u2028', '\\u2028').replaceAll('\u2029', '\\u2029')};\n`;
 }
 const required = (properties, name, type) => {
   const field = properties?.[name];
