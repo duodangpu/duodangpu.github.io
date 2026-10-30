@@ -27,7 +27,7 @@
     link.className = 'about-account';
     link.setAttribute('aria-label', `访问 ${account.name} 的主页`);
     const avatar = element('img', 'about-avatar');
-    avatar.src = 'brand-icon.png?v=2'; avatar.alt = ''; avatar.width = 48; avatar.height = 48;
+    avatar.src = /^media\/[a-zA-Z0-9_-]+\.(jpg|jpeg|png|webp|gif)$/.test(account.avatar || '') ? account.avatar : 'brand-icon.png?v=2'; avatar.alt = ''; avatar.width = 48; avatar.height = 48;
     const identity = element('div', 'about-identity');
     identity.append(element('strong', '', account.name));
     if (account.role) identity.append(element('span', '', account.role));
@@ -35,6 +35,30 @@
     link.append(avatar, identity, arrow);
     document.querySelector('#about-accounts').append(link);
     hasContent = true;
+  }
+  const letter = (about?.letter || []).filter(p => typeof p === 'string' && p.trim());
+  if (letter.length) {
+    const button = document.querySelector('#letter-open');
+    const dialog = document.querySelector('#letter-dialog');
+    document.querySelector('#letter-content').replaceChildren(...letter.map(p => element('p', '', p)));
+    button.hidden = false;
+    button.addEventListener('click', () => { dialog.showModal(); document.body.classList.add('dialog-open'); });
+    dialog.querySelector('.close').addEventListener('click', () => dialog.close());
+    dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); });
+    dialog.addEventListener('close', () => { document.body.classList.remove('dialog-open'); button.focus(); });
+    hasContent = true;
+  }
+  const donations = (about?.donations || []).filter(path => /^media\/[a-zA-Z0-9_-]+\.(jpg|jpeg|png|webp|gif)$/.test(path));
+  if (donations.length) {
+    const fold = element('details', 'about-group-fold');
+    const summary = element('summary', 'about-group-summary');
+    const badge = element('span', 'about-group-icon', '♥'); badge.setAttribute('aria-hidden', 'true');
+    const info = element('div', 'about-group-info'); info.append(element('h2', '', '支持我们'));
+    const arrow = element('span', 'about-arrow', '＋'); arrow.setAttribute('aria-hidden', 'true');
+    summary.append(badge, info, arrow);
+    const content = element('div', 'about-group-content');
+    donations.forEach((path, i) => { const img = element('img', 'about-qr'); img.src = path; img.alt = `打赏二维码 ${i + 1}`; img.width = 160; img.height = 160; content.append(img); });
+    fold.append(summary, content); document.querySelector('#about-donation').append(fold); hasContent = true;
   }
   const qrPath = /^media\/[a-zA-Z0-9._-]+$/.test(about?.qr || '') ? about.qr : '';
   const groupLink = externalLink('加入 ↗', about?.groupUrl);

@@ -59,7 +59,8 @@ export function sanitize(input) {
   if (rawAbout) {
     const qr = string(rawAbout.qr);
     if (qr && !/^media\/[a-zA-Z0-9_-]+\.(jpg|jpeg|png|webp|gif)$/.test(qr)) fail('QQ群图片必须是本地 media 文件');
-    about = {intro: string(rawAbout.intro), groupUrl: safeUrl(rawAbout.groupUrl), qr, accounts: (rawAbout.accounts || []).map(account => ({name:string(account.name), url:safeUrl(account.url), role:string(account.role)}))};
+    const localImage = value => { const path = string(value); if (path && !/^media\/[a-zA-Z0-9_-]+\.(jpg|jpeg|png|webp|gif)$/.test(path)) fail('图片必须是本地 media 文件'); return path; };
+    about = {intro: string(rawAbout.intro), letter: (rawAbout.letter || []).map(string), groupUrl: safeUrl(rawAbout.groupUrl), qr, donations: (rawAbout.donations || []).map(localImage), accounts: (rawAbout.accounts || []).map(account => ({name:string(account.name), url:safeUrl(account.url), role:string(account.role), avatar:localImage(account.avatar)}))};
   }
   return {verifiedOn: dateOnly(input.verifiedOn), works, lives, about};
 }
@@ -80,15 +81,17 @@ export function parseWorkVideos(blocks) {
   return videos;
 }
 export function parseAbout(blocks) {
-  const about = {intro:'', groupUrl:'', qr:'', accounts:[]};
+  const about = {intro:'', letter:[], groupUrl:'', qr:'', donations:[], accounts:[]};
   let section = '';
   let account = null;
   let qrUrl = '';
+  const avatarUrls = [];
+  const donationUrls = [];
   for (const block of blocks) {
     if (['heading_1', 'heading_2', 'heading_3'].includes(block.type)) {
       section = text(block[block.type]).trim();
-      account = /^(B站|小红书)账号(?:[一二三四五六七八九十]+|\d+)$/.test(section) ? {name:'', url:'', role:''} : null;
-      if (account) about.accounts.push(account);
+      account = /^(B站|小红书)账号(?:[一二三四五六七八九十]+|\d+)$/.test(section) ? {name:'', url:'', role:'', avatar:''} : null;
+      if (account) { about.accounts.push(account); avatarUrls.push(''); }
       continue;
     }
     if (block.type === 'image' && section === 'QQ群') {
@@ -96,9 +99,16 @@ export function parseAbout(blocks) {
       qrUrl = safeUrl(block.image?.[block.image.type]?.url);
       if (!qrUrl.startsWith('https://')) fail('QQ群图片必须为 HTTPS 图片');
     }
+    if (block.type === 'image' && (account || section === '打赏')) {
+      const url = safeUrl(block.image?.[block.image.type]?.url);
+      if (!url.startsWith('https://')) fail('关于我们的图片必须为 HTTPS 图片');
+      if (account) { if (avatarUrls[avatarUrls.length - 1]) fail('每个账号只能有一张头像'); avatarUrls[avatarUrls.length - 1] = url; }
+      else { if (donationUrls.length >= 2) fail('打赏最多支持两张二维码'); donationUrls.push(url); }
+    }
     if (block.type !== 'paragraph') continue;
     const pieces = block.paragraph.rich_text || [];
     const line = text(block.paragraph);
+    if (section === '给观众的一封信' && line.trim()) about.letter.push(line);
     const value = label => line.startsWith(label + '：') ? line.slice(label.length + 1).trim() : null;
     const linkedValue = label => value(label) === null ? null : (pieces.find(part => part.href)?.href || value(label));
     if (section === '简介' && value('简介内容') !== null) about.intro = value('简介内容');
@@ -109,7 +119,7 @@ export function parseAbout(blocks) {
       if (linkedValue('主页链接') !== null) account.url = safeUrl(linkedValue('主页链接'));
     }
   }
-  return {about, qrUrl};
+  return {about, qrUrl, avatarUrls, donationUrls};
 }
 export function serialize(data) {
   const index = title => ({searchPinyin: [pinyin(title, {toneType: 'none'}), pinyin(title, {pattern: 'first', toneType: 'none'})], searchTokens: pinyin(title, {toneType: 'none', type: 'array'})});

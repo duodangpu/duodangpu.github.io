@@ -128,6 +128,13 @@ h1 { margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -.5px; line-h
 .live { margin-top: 48px; }
 .about-page { min-height: calc(100vh - 150px); padding-top: 64px; padding-bottom: 48px; }
 .about-intro { margin: 18px 0 32px; color: var(--muted); font-size: 16px; }
+.letter-open { display: flex; justify-content: space-between; align-items: center; width: min(100%, 840px); margin: 0 0 24px; padding: 17px 20px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: var(--shadow-card); color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.letter-open[hidden] { display: none; }
+.letter-open span { font-size: 20px; }
+#letter-dialog { width: min(680px, calc(100% - 32px)); max-height: calc(100dvh - 48px); overflow-y: auto; }
+#letter-dialog h2 { margin: 0 0 24px; font-size: 22px; }
+.letter-content { line-height: 1.9; overflow-wrap: anywhere; }
+.letter-content p { margin: 0 0 1.2em; }
 .about-accounts { max-width: 840px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .about-account { display: flex; align-items: center; gap: 14px; min-width: 0; padding: 20px; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow-card); transition: box-shadow var(--duration) var(--ease), transform var(--duration) var(--ease); }
 .about-account:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); }

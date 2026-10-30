@@ -38,7 +38,7 @@ export async function downloadCover(cover, directory, fetcher = fetch, lossless 
   return path;
 }
 export async function build({notion = false} = {}) {
-  let data, covers, qrUrl;
+  let data, covers, qrUrl, avatarUrls = [], donationUrls = [];
   // Fetch and validate before touching the last successful artifact.
   if (notion) {
     const request = notionRequest(process.env.NOTION_TOKEN);
@@ -49,6 +49,8 @@ export async function build({notion = false} = {}) {
     const parsed = parseAbout(await getAllBlocks(aboutPage, request));
     data.about = parsed.about;
     qrUrl = parsed.qrUrl;
+    avatarUrls = parsed.avatarUrls;
+    donationUrls = parsed.donationUrls;
   } else data = sanitize(JSON.parse(await readFile(join(root, 'public-snapshot.json'), 'utf8')));
   const staging = await mkdtemp(join(root, '.build-'));
   try {
@@ -57,6 +59,8 @@ export async function build({notion = false} = {}) {
     if (notion) {
       for (const cover of covers) data.works.find(work => work.id === cover.id).cover = await downloadCover(cover, staging);
       if (qrUrl) data.about.qr = await downloadCover({url: qrUrl}, staging, fetch, true);
+      for (let i = 0; i < avatarUrls.length; i++) if (avatarUrls[i]) data.about.accounts[i].avatar = await downloadCover({url: avatarUrls[i]}, staging);
+      for (const url of donationUrls) data.about.donations.push(await downloadCover({url}, staging, fetch, true));
     } else {
       for (const work of data.works) if (work.cover) work.cover = await optimizeCover(await readFile(join(root, work.cover)), staging);
     }
