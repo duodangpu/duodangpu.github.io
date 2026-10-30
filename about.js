@@ -17,6 +17,29 @@
     return result;
   };
   let hasContent = false;
+  const qrDialog = document.querySelector('#qr-dialog');
+  let qrTrigger;
+  qrDialog.querySelector('.close').addEventListener('click', () => qrDialog.close());
+  qrDialog.addEventListener('click', event => {
+    const rect = qrDialog.getBoundingClientRect();
+    if (event.target === qrDialog && (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom)) qrDialog.close();
+  });
+  qrDialog.addEventListener('close', () => { document.body.classList.remove('dialog-open'); qrTrigger?.focus(); });
+  const qrButton = (path, label) => {
+    const button = element('button', 'qr-zoom'); button.type = 'button';
+    button.setAttribute('aria-label', `放大${label}`);
+    button.setAttribute('aria-haspopup', 'dialog');
+    const img = element('img', 'about-qr'); img.src = path; img.alt = label; img.width = 160; img.height = 160;
+    button.append(img);
+    button.addEventListener('click', () => {
+      qrTrigger = button;
+      document.querySelector('#qr-title').textContent = label;
+      const full = document.querySelector('#qr-full'); full.src = path; full.alt = label;
+      document.querySelector('#qr-original').href = path;
+      qrDialog.showModal(); document.body.classList.add('dialog-open');
+    });
+    return button;
+  };
   if (about?.intro) {
     const intro = document.querySelector('#about-intro');
     intro.textContent = about.intro; intro.hidden = false; hasContent = true;
@@ -30,6 +53,7 @@
     avatar.src = /^media\/[a-zA-Z0-9_-]+\.(jpg|jpeg|png|webp|gif)$/.test(account.avatar || '') ? account.avatar : 'brand-icon.png?v=2'; avatar.alt = ''; avatar.width = 48; avatar.height = 48;
     const identity = element('div', 'about-identity');
     identity.append(element('strong', '', account.name));
+    if (account.platform) identity.append(element('span', `account-platform${account.platform === '小红书' ? ' platform-xhs' : ''}`, account.platform));
     if (account.role) identity.append(element('span', '', account.role));
     const arrow = element('span', 'about-arrow', '↗'); arrow.setAttribute('aria-hidden', 'true');
     link.append(avatar, identity, arrow);
@@ -57,7 +81,7 @@
     const arrow = element('span', 'about-arrow', '＋'); arrow.setAttribute('aria-hidden', 'true');
     summary.append(badge, info, arrow);
     const content = element('div', 'about-group-content');
-    donations.forEach((path, i) => { const img = element('img', 'about-qr'); img.src = path; img.alt = `打赏二维码 ${i + 1}`; img.width = 160; img.height = 160; content.append(img); });
+    donations.forEach((path, i) => content.append(qrButton(path, `打赏二维码 ${i + 1}`)));
     fold.append(summary, content); document.querySelector('#about-donation').append(fold); hasContent = true;
   }
   const qrPath = /^media\/[a-zA-Z0-9._-]+$/.test(about?.qr || '') ? about.qr : '';
@@ -73,9 +97,7 @@
     summary.append(badge, info, arrow); fold.append(summary);
     const content = element('div', 'about-group-content');
     if (qrPath) {
-      const qr = element('img', 'about-qr');
-      qr.src = qrPath; qr.alt = 'QQ群二维码'; qr.width = 160; qr.height = 160;
-      content.append(qr);
+      content.append(qrButton(qrPath, 'QQ群二维码'));
     }
     if (groupLink) { groupLink.textContent = '加入 QQ 群 ↗'; content.append(groupLink); }
     fold.append(content); group.append(fold);

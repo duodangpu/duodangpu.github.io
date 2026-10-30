@@ -60,7 +60,7 @@ export function sanitize(input) {
     const qr = string(rawAbout.qr);
     if (qr && !/^media\/[a-zA-Z0-9_-]+\.(jpg|jpeg|png|webp|gif)$/.test(qr)) fail('QQ群图片必须是本地 media 文件');
     const localImage = value => { const path = string(value); if (path && !/^media\/[a-zA-Z0-9_-]+\.(jpg|jpeg|png|webp|gif)$/.test(path)) fail('图片必须是本地 media 文件'); return path; };
-    about = {intro: string(rawAbout.intro), letter: (rawAbout.letter || []).map(string), groupUrl: safeUrl(rawAbout.groupUrl), qr, donations: (rawAbout.donations || []).map(localImage), accounts: (rawAbout.accounts || []).map(account => ({name:string(account.name), url:safeUrl(account.url), role:string(account.role), avatar:localImage(account.avatar)}))};
+    about = {intro: string(rawAbout.intro), letter: (rawAbout.letter || []).map(string), groupUrl: safeUrl(rawAbout.groupUrl), qr, donations: (rawAbout.donations || []).map(localImage), accounts: (rawAbout.accounts || []).map(account => ({name:string(account.name), platform:['B站', '小红书'].includes(account.platform) ? account.platform : '', url:safeUrl(account.url), role:string(account.role), avatar:localImage(account.avatar)}))};
   }
   return {verifiedOn: dateOnly(input.verifiedOn), works, lives, about};
 }
@@ -90,7 +90,8 @@ export function parseAbout(blocks) {
   for (const block of blocks) {
     if (['heading_1', 'heading_2', 'heading_3'].includes(block.type)) {
       section = text(block[block.type]).trim();
-      account = /^(B站|小红书)账号(?:[一二三四五六七八九十]+|\d+)$/.test(section) ? {name:'', url:'', role:'', avatar:''} : null;
+      const platform = section.match(/^(B站|小红书)账号(?:[一二三四五六七八九十]+|\d+)$/)?.[1];
+      account = platform ? {name:'', platform, url:'', role:'', avatar:''} : null;
       if (account) { about.accounts.push(account); avatarUrls.push(''); }
       continue;
     }

@@ -63,6 +63,7 @@ test('about page only exposes named sections and validates links', async () => {
   assert.equal(result.about.accounts[0].url,'https://example.com/profile');
   const more = parseAbout([heading('B站账号1'),paragraph('账号名称：一'),paragraph('主页链接：https://example.com/1'),heading('B站账号3'),paragraph('账号名称：三'),paragraph('主页链接：https://example.com/3'),heading('小红书账号1'),paragraph('账号名称：小红书'),paragraph('主页链接：https://example.com/xhs'),heading('私人账号'),paragraph('账号名称：不公开')]);
   assert.deepEqual(more.about.accounts.map(account => account.name), ['一', '三', '小红书']);
+  assert.deepEqual(more.about.accounts.map(account => account.platform), ['B站', 'B站', '小红书']);
   const image = url => ({type:'image', image:{type:'file',file:{url}}});
   const extended = parseAbout([heading('给观众的一封信'),paragraph('第一段'),paragraph('第二段'),heading('B站账号1'),paragraph('账号名称：一'),image('https://example.com/avatar.png'),heading('打赏'),image('https://example.com/a.png'),image('https://example.com/b.png')]);
   assert.deepEqual(extended.about.letter, ['第一段', '第二段']);
