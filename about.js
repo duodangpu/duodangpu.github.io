@@ -42,15 +42,19 @@
     const group = document.querySelector('#about-group');
     const info = element('div', 'about-group-info');
     info.append(element('h2', '', '加入 QQ 群'));
-    if (!groupLink && qrPath) info.append(element('span', 'pending', '扫码加入'));
     const badge = element('span', 'about-group-icon', 'QQ'); badge.setAttribute('aria-hidden', 'true');
-    group.append(badge, info);
-    if (groupLink) { groupLink.className = 'about-group-link'; groupLink.setAttribute('aria-label', '加入 QQ 群'); groupLink.append(element('span', 'about-arrow', '↗')); group.append(groupLink); }
+    const fold = element('details', 'about-group-fold');
+    const summary = element('summary', 'about-group-summary');
+    const arrow = element('span', 'about-arrow', '＋'); arrow.setAttribute('aria-hidden', 'true');
+    summary.append(badge, info, arrow); fold.append(summary);
+    const content = element('div', 'about-group-content');
     if (qrPath) {
       const qr = element('img', 'about-qr');
       qr.src = qrPath; qr.alt = 'QQ群二维码'; qr.width = 160; qr.height = 160;
-      group.append(qr);
+      content.append(qr);
     }
+    if (groupLink) { groupLink.textContent = '加入 QQ 群 ↗'; content.append(groupLink); }
+    fold.append(content); group.append(fold);
     hasContent = true;
   }
   document.querySelector('#about-empty').hidden = hasContent;

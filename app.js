@@ -191,20 +191,20 @@
         list.append(group);
         return;
       }
-      const item = node('article', 'work-card live-card');
-      const button = node('button', 'card-open');
+      const item = node('article', 'live-card');
+      const button = node('button', 'card-open live-card-button');
       button.type = 'button';
       button.setAttribute('aria-label', `查看 ${live.title || live.date}`);
-      const artwork = node('div', 'artwork live-art');
-      artwork.append(node('span', 'live-art-label', 'LIVE'), node('span', 'live-art-date', live.date.replaceAll('-', '.')));
-      const body = node('div', 'card-body');
+      const date = node('span', 'live-date', live.date.replaceAll('-', '.'));
+      const body = node('div', 'live-card-body');
       const name = node('h3');
       highlight(name, live.title || `${live.date} 直播`, live.searchTokens);
       const total = live.programs?.length || 0;
       const labels = node('div', 'tags');
       labels.append(node('span', '', query && !sessionMatch ? `${programs.length} 个匹配` : `${total} 个节目`), node('span', safeUrl(live.replay) ? 'sage' : 'warm', safeUrl(live.replay) ? '回放已更新' : '回放待更新'));
       body.append(name, labels);
-      button.append(artwork, body);
+      const arrow = node('span', 'live-card-arrow', '↗'); arrow.setAttribute('aria-hidden', 'true');
+      button.append(date, body, arrow);
       button.addEventListener('click', () => showLive(live, button, programs));
       item.append(button);
       list.append(item);
