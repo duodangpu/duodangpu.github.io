@@ -109,7 +109,7 @@ export function parseAbout(blocks) {
     if (block.type !== 'paragraph') continue;
     const pieces = block.paragraph.rich_text || [];
     const line = text(block.paragraph);
-    if (section === '给观众的一封信' && line.trim()) about.letter.push(line);
+    if (['我们的初心', '给观众的一封信'].includes(section) && line.trim()) about.letter.push(line);
     const value = label => line.startsWith(label + '：') ? line.slice(label.length + 1).trim() : null;
     const linkedValue = label => value(label) === null ? null : (pieces.find(part => part.href)?.href || value(label));
     if (section === '简介' && value('简介内容') !== null) about.intro = value('简介内容');

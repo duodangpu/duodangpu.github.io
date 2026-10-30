@@ -68,7 +68,10 @@
     button.hidden = false;
     button.addEventListener('click', () => { dialog.showModal(); document.body.classList.add('dialog-open'); });
     dialog.querySelector('.close').addEventListener('click', () => dialog.close());
-    dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); });
+    dialog.addEventListener('click', event => {
+      const rect = dialog.getBoundingClientRect();
+      if (event.target === dialog && (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom)) dialog.close();
+    });
     dialog.addEventListener('close', () => { document.body.classList.remove('dialog-open'); button.focus(); });
     hasContent = true;
   }

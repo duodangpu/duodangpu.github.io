@@ -128,13 +128,21 @@ h1 { margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -.5px; line-h
 .live { margin-top: 48px; }
 .about-page { min-height: calc(100vh - 150px); padding-top: 64px; padding-bottom: 48px; }
 .about-intro { margin: 18px 0 32px; color: var(--muted); font-size: 16px; }
-.letter-open { display: flex; justify-content: space-between; align-items: center; width: min(100%, 840px); margin: 0 0 24px; padding: 17px 20px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: var(--shadow-card); color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.letter-open { display: flex; align-items: center; gap: 20px; width: min(100%, 840px); min-height: 106px; margin: 0 0 28px; padding: 24px 28px; border: 1px solid #dedccd; border-radius: 22px; background: #f1efe5; box-shadow: var(--shadow-card); color: #454e3e; font: inherit; text-align: left; cursor: pointer; transition: background var(--duration) var(--ease), box-shadow var(--duration) var(--ease); }
 .letter-open[hidden] { display: none; }
-.letter-open span { font-size: 20px; }
-#letter-dialog { width: min(680px, calc(100% - 32px)); max-height: calc(100dvh - 48px); overflow-y: auto; }
-#letter-dialog h2 { margin: 0 0 24px; font-size: 22px; }
-.letter-content { line-height: 1.9; overflow-wrap: anywhere; }
-.letter-content p { margin: 0 0 1.2em; }
+.letter-open strong { font-size: 21px; font-weight: 600; }
+.letter-envelope { width: 48px; height: 40px; flex: none; stroke: #7d856c; stroke-width: 1.4; }
+.letter-entry-arrow { margin-left: auto; font-size: 24px; }
+.letter-open:hover { background: #eae8dc; box-shadow: var(--shadow-hover); }
+.letter-open:focus-visible { outline: 2px solid #7d856c; outline-offset: 4px; }
+#letter-dialog { width: min(720px, calc(100% - 48px)); max-height: calc(100dvh - 80px); overflow-y: auto; background: #fcfaf4; }
+#letter-dialog .close { font-size: 22px; }
+.letter-paper { clear: both; padding: 10px 28px 18px; font-family: "Noto Serif SC", "Songti SC", SimSun, serif; color: #4f4b40; }
+#letter-dialog h2 { margin: 0 0 36px; padding-bottom: 24px; border-bottom: 1px solid #e4dfd2; font-size: 27px; font-weight: 500; letter-spacing: .08em; text-align: center; }
+.letter-content { font-size: 16px; line-height: 2.1; overflow-wrap: anywhere; }
+.letter-content p { margin: 0 0 1.35em; text-indent: 2em; }
+.letter-salutation { margin: 0 0 24px; font-size: 16px; }
+.letter-signature { margin: 32px 0 0; text-align: right; font-size: 17px; }
 .about-accounts { max-width: 840px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .about-account { display: flex; align-items: center; gap: 14px; min-width: 0; padding: 20px; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow-card); transition: box-shadow var(--duration) var(--ease), transform var(--duration) var(--ease); }
 .about-account:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); }
@@ -294,6 +302,12 @@ footer span { padding: 0 5px; }
   .program-link, .program .pending { font-size: 11px; }
   dialog { width: min(440px, calc(100% - 48px)); padding: 20px 20px 26px; border-radius: 24px; max-height: calc(100dvh - 120px); }
   #letter-dialog { width: min(440px, calc(100% - 48px)); max-height: calc(100dvh - 120px); }
+  #letter-dialog .close { background: #fcfaf4; }
+  .letter-open { min-height: 96px; padding: 20px; gap: 16px; }
+  .letter-open strong { font-size: 20px; }
+  .letter-envelope { width: 40px; }
+  .letter-paper { padding: 12px 2px 6px; }
+  #letter-dialog h2 { font-size: 24px; margin-bottom: 28px; }
   dialog .close { position: sticky; top: 0; float: right; z-index: 2; margin: -8px -8px 0 0; background: var(--surface); box-shadow: 0 2px 12px rgb(23 31 20 / 10%); }
   dialog .close + * { clear: both; }
   .dialog-layout { grid-template-columns: 1fr; gap: 22px; }
