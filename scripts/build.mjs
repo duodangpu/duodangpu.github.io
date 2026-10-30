@@ -51,7 +51,7 @@ export async function build({notion = false} = {}) {
   const staging = await mkdtemp(join(root, '.build-'));
   try {
     await mkdir(join(staging, 'media'));
-    for (const file of ['index.html', 'about.html', 'app.js', 'about.js', 'style.css', 'brand-icon.png']) await copyFile(join(root, file), join(staging, file));
+    for (const file of ['index.html', 'about.html', 'app.js', 'about.js', 'style.css', 'brand-icon.png', 'brand-wordmark.png']) await copyFile(join(root, file), join(staging, file));
     if (notion) {
       for (const cover of covers) data.works.find(work => work.id === cover.id).cover = await downloadCover(cover, staging);
       if (qrUrl) data.about.qr = await downloadCover({url: qrUrl}, staging, fetch, true);

@@ -22,14 +22,18 @@
     intro.textContent = about.intro; intro.hidden = false; hasContent = true;
   }
   for (const account of about?.accounts || []) {
-    const link = externalLink('关注 ↗', account.url);
+    const link = externalLink('', account.url);
     if (!account.name || !link) continue;
-    const row = element('div', 'about-account');
+    link.className = 'about-account';
+    link.setAttribute('aria-label', `访问 ${account.name} 的主页`);
+    const avatar = element('img', 'about-avatar');
+    avatar.src = 'brand-icon.png?v=2'; avatar.alt = ''; avatar.width = 48; avatar.height = 48;
     const identity = element('div', 'about-identity');
     identity.append(element('strong', '', account.name));
     if (account.role) identity.append(element('span', '', account.role));
-    row.append(identity, link);
-    document.querySelector('#about-accounts').append(row);
+    const arrow = element('span', 'about-arrow', '↗'); arrow.setAttribute('aria-hidden', 'true');
+    link.append(avatar, identity, arrow);
+    document.querySelector('#about-accounts').append(link);
     hasContent = true;
   }
   const qrPath = /^media\/[a-zA-Z0-9._-]+$/.test(about?.qr || '') ? about.qr : '';
@@ -37,9 +41,11 @@
   if (qrPath || groupLink) {
     const group = document.querySelector('#about-group');
     const info = element('div', 'about-group-info');
-    info.append(element('h2', '', 'QQ群'));
-    info.append(groupLink || element('span', 'pending', '扫码加入'));
-    group.append(info);
+    info.append(element('h2', '', '加入 QQ 群'));
+    if (!groupLink && qrPath) info.append(element('span', 'pending', '扫码加入'));
+    const badge = element('span', 'about-group-icon', 'QQ'); badge.setAttribute('aria-hidden', 'true');
+    group.append(badge, info);
+    if (groupLink) { groupLink.className = 'about-group-link'; groupLink.setAttribute('aria-label', '加入 QQ 群'); groupLink.append(element('span', 'about-arrow', '↗')); group.append(groupLink); }
     if (qrPath) {
       const qr = element('img', 'about-qr');
       qr.src = qrPath; qr.alt = 'QQ群二维码'; qr.width = 160; qr.height = 160;

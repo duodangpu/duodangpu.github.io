@@ -53,6 +53,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--line); }
 }
 .brand { display: flex; align-items: center; gap: 10px; font-size: 21px; font-weight: 650; white-space: nowrap; }
 .brand-mark { display: block; width: 32px; height: 32px; border-radius: 10px; object-fit: cover; }
+.brand-wordmark { display: block; width: 105px; height: 30px; object-fit: contain; mix-blend-mode: multiply; }
 nav { display: flex; gap: 6px; color: var(--muted); }
 nav a { padding: 9px 13px; border-radius: var(--radius-sm); white-space: nowrap; transition: background var(--duration) var(--ease), color var(--duration) var(--ease); }
 nav a.active { background: var(--surface-hover); color: var(--ink); font-weight: 550; }
@@ -127,13 +128,19 @@ h1 { margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -.5px; line-h
 .live { margin-top: 48px; }
 .about-page { min-height: calc(100vh - 150px); padding-top: 64px; padding-bottom: 48px; }
 .about-intro { margin: 18px 0 32px; color: var(--muted); font-size: 16px; }
-.about-accounts { max-width: 680px; }
-.about-account { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 16px 0; border-bottom: 1px solid var(--line); }
-.about-identity { display: flex; flex-direction: column; min-width: 0; gap: 5px; overflow-wrap: anywhere; }
+.about-accounts { max-width: 840px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.about-account { display: flex; align-items: center; gap: 14px; min-width: 0; padding: 20px; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow-card); transition: box-shadow var(--duration) var(--ease), transform var(--duration) var(--ease); }
+.about-account:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); }
+.about-avatar { width: 48px; height: 48px; flex: none; border-radius: 15px; object-fit: cover; }
+.about-identity { display: flex; flex: 1; flex-direction: column; min-width: 0; gap: 5px; overflow-wrap: anywhere; }
 .about-identity span { color: var(--muted); font-size: 13px; }
-.about-group { display: flex; align-items: center; gap: 24px; margin-top: 26px; }
+.about-arrow { width: 34px; height: 34px; display: grid; place-items: center; flex: none; border-radius: 50%; background: #eff4f0; color: #607468; font-size: 19px; }
+.about-group { display: flex; align-items: center; gap: 18px; max-width: 840px; margin-top: 28px; padding: 20px; background: #eff4f0; border-radius: 18px; }
 .about-group:empty { display: none; }
-.about-group h2 { font-size: 15px; margin: 0 0 10px; }
+.about-group h2 { font-size: 15px; margin: 0 0 4px; }
+.about-group-info { flex: 1; min-width: 0; }
+.about-group-icon { width: 52px; height: 52px; display: grid; place-items: center; flex: none; border-radius: 16px; background: #dceae1; color: #52715e; font-weight: 700; }
+.about-group-link { display: grid; place-items: center; flex: none; }
 .about-qr { width: 160px; height: 160px; object-fit: contain; }
 .live h2 { font-size: 22px; font-weight: 600; margin: 0; }
 .live-grid { margin-top: 24px; }
@@ -216,6 +223,7 @@ footer span { padding: 0 5px; }
   .top { position: relative; height: auto; min-height: 108px; padding: 14px 18px 8px; gap: 4px 14px; flex-wrap: wrap; }
   .brand { font-size: 19px; gap: 8px; }
   .brand-mark { width: 25px; height: 25px; border-radius: 9px; font-size: 10px; }
+  .brand-wordmark { width: 90px; height: 26px; }
   nav { gap: 2px; font-size: 12px; order: 3; width: 100%; }
   nav a { padding: 9px 8px; }
   .search { display: none; }
@@ -226,6 +234,10 @@ footer span { padding: 0 5px; }
   main, footer { padding-left: 18px; padding-right: 18px; }
   .catalog { padding-top: 30px; }
   .about-page { padding-top: 42px; }
+  .about-accounts { grid-template-columns: 1fr; gap: 10px; }
+  .about-account { padding: 15px; }
+  .about-group { flex-wrap: wrap; padding: 16px; }
+  .about-qr { width: 128px; height: 128px; }
   h1 { font-size: 24px; }
   .count { font-size: 11px; }
   .filters { margin: 20px 0 24px; gap: 4px; }
