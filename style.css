@@ -151,6 +151,7 @@ h1 { margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -.5px; line-h
 .about-group-content { display: flex; align-items: center; gap: 20px; padding: 0 20px 20px 90px; }
 .about-group-info { flex: 1; min-width: 0; }
 .about-group-icon { width: 52px; height: 52px; display: grid; place-items: center; flex: none; border-radius: 16px; background: #dceae1; color: #52715e; font-weight: 700; }
+.donation-icon { background: #fae9e7; font-size: 24px; }
 .about-group-link { display: grid; place-items: center; flex: none; }
 .about-qr { width: 160px; height: 160px; object-fit: contain; }
 .live h2 { font-size: 22px; font-weight: 600; margin: 0; }
@@ -283,7 +284,10 @@ footer span { padding: 0 5px; }
   .live-content { padding: 0 15px 18px; }
   .program { font-size: 13px; gap: 12px; }
   .program-link, .program .pending { font-size: 11px; }
-  dialog { width: min(440px, calc(100% - 32px)); padding: 56px 24px 26px; border-radius: 24px; max-height: calc(100dvh - 32px); }
+  dialog { width: min(440px, calc(100% - 48px)); padding: 20px 20px 26px; border-radius: 24px; max-height: calc(100dvh - 120px); }
+  #letter-dialog { width: min(440px, calc(100% - 48px)); max-height: calc(100dvh - 120px); }
+  dialog .close { position: sticky; top: 0; float: right; z-index: 2; margin: -8px -8px 0 0; background: var(--surface); box-shadow: 0 2px 12px rgb(23 31 20 / 10%); }
+  dialog .close + * { clear: both; }
   .dialog-layout { grid-template-columns: 1fr; gap: 22px; }
   .dialog-info h2 { font-size: 21px; }
   .dialog-info .tags { margin-top: 12px; }

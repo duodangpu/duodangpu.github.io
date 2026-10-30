@@ -52,7 +52,7 @@
   if (donations.length) {
     const fold = element('details', 'about-group-fold');
     const summary = element('summary', 'about-group-summary');
-    const badge = element('span', 'about-group-icon', '♥'); badge.setAttribute('aria-hidden', 'true');
+    const badge = element('span', 'about-group-icon donation-icon', '🧧'); badge.setAttribute('aria-hidden', 'true');
     const info = element('div', 'about-group-info'); info.append(element('h2', '', '支持我们'));
     const arrow = element('span', 'about-arrow', '＋'); arrow.setAttribute('aria-hidden', 'true');
     summary.append(badge, info, arrow);
