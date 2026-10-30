@@ -3,7 +3,7 @@ import {customPinyin, pinyin} from 'pinyin-pro';
 // The only fields that may leave the content pipeline are listed explicitly here.
 customPinyin({'甄嬛传': 'zhēn xuán zhuàn'});
 export const sources = {
-  works: '71db1319-0f9c-4810-8af2-092a12208e26',
+  works: '66246c87-6826-4ddd-9871-c070164ecb87',
   lives: 'ba72d37d-0691-48a5-9ffa-f622354b0a9d',
   programs: 'a5df2d9c-6e1e-4434-82d2-39b282df57a6'
 };
@@ -36,7 +36,7 @@ export function sanitize(input) {
   const works = input.works.map(work => {
     const cover = string(work.cover);
     if (cover && !/^media\/[a-zA-Z0-9_-]+\.(jpg|jpeg|png|webp|gif)$/.test(cover)) fail('封面必须是本地 media 文件');
-    return {id: cleanId(work.id), title: title(work.title), category: string(work.category), progress: string(work.progress), bilibili: safeUrl(work.bilibili), drive: safeUrl(work.drive), cover};
+    return {id: cleanId(work.id), title: title(work.title), category: string(work.category), progress: string(work.progress), bilibili: safeUrl(work.bilibili), drive: safeUrl(work.drive), cover, videos: (work.videos || []).map(video => ({title: title(video.title), url: safeUrl(video.url)}))};
   });
   unique(works, '作品');
   const workIds = new Set(works.map(work => work.id));
@@ -62,6 +62,22 @@ export function sanitize(input) {
     about = {intro: string(rawAbout.intro), groupUrl: safeUrl(rawAbout.groupUrl), qr, accounts: (rawAbout.accounts || []).map(account => ({name:string(account.name), url:safeUrl(account.url), role:string(account.role)}))};
   }
   return {verifiedOn: dateOnly(input.verifiedOn), works, lives, about};
+}
+export function parseWorkVideos(blocks) {
+  let inVideos = false;
+  const videos = [];
+  for (const block of blocks) {
+    if (['heading_1', 'heading_2', 'heading_3'].includes(block.type)) {
+      inVideos = text(block[block.type]).trim() === '视频列表';
+      continue;
+    }
+    if (!inVideos || !['bulleted_list_item', 'numbered_list_item'].includes(block.type)) continue;
+    const field = block[block.type];
+    const urls = [...new Set((field.rich_text || []).map(part => part.href || part.text?.link?.url).filter(Boolean))];
+    if (urls.length !== 1) fail('作品视频列表的每一项需要一个视频链接');
+    videos.push({title: title(text(field)), url: safeUrl(urls[0])});
+  }
+  return videos;
 }
 export function parseAbout(blocks) {
   const about = {intro:'', groupUrl:'', qr:'', accounts:[{name:'',url:'',role:''},{name:'',url:'',role:''}]};
@@ -120,8 +136,13 @@ export function fromNotion(raw) {
     }
     const progress = p['更新进度'];
     if (!progress || !['select', 'rich_text'].includes(progress.type)) fail('Notion 字段 更新进度 应为 select 或 rich_text');
-    return {id, title: text(required(p, '作品名称', 'title')), category: required(p, '分类', 'select').select?.name || '', progress: progress.type === 'select' ? progress.select?.name || '' : text(progress), bilibili: required(p, 'B站Reaction合集', 'url').url, drive: required(p, '网盘Reaction链接', 'url').url, cover: ''};
+    const number = p['作品编号'];
+    if (number && number.type !== 'unique_id') fail('Notion 字段 作品编号 应为 unique_id');
+    const numberValue = number?.unique_id?.number ?? null;
+    if (numberValue !== null && (!Number.isSafeInteger(numberValue) || numberValue < 0)) fail('作品编号无效');
+    return {id, title: text(required(p, '作品名称', 'title')), category: required(p, '分类', 'select').select?.name || '', progress: progress.type === 'select' ? progress.select?.name || '' : text(progress), bilibili: required(p, 'B站Reaction合集', 'url').url, drive: required(p, '网盘Reaction链接', 'url').url, cover: '', number: numberValue};
   });
+  works.sort((a, b) => (b.number ?? -Infinity) - (a.number ?? -Infinity));
   const lives = active(raw.lives).map(page => {
     const p = page.properties;
     return {id: cleanId(page.id), title: text(required(p, '直播场次', 'title')), date: required(p, '直播日期', 'date').date?.start?.slice(0, 10), replay: required(p, 'B站回放', 'url').url, programs: []};

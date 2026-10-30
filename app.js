@@ -97,9 +97,22 @@
       const entry = link(label, url, 'watch-link');
       if (entry) links.append(entry);
     }
-    if (!links.childElementCount) links.append(node('span', 'pending', '观看入口待更新'));
+    if (!links.childElementCount && !work.videos?.length) links.append(node('span', 'pending', '观看入口待更新'));
     const related = document.querySelector('#related-lives');
     related.replaceChildren();
+    if (work.videos?.length) {
+      const fold = node('details', 'live-programs');
+      fold.append(node('summary', '', `视频列表 · ${work.videos.length}`));
+      const list = node('ol', 'programs');
+      for (const video of work.videos) {
+        const row = node('li', 'program');
+        row.append(node('span', 'program-title', video.title));
+        row.append(link('B站观看 ↗', video.url, 'program-link') || node('span', 'pending', '链接待更新'));
+        list.append(row);
+      }
+      fold.append(list);
+      related.append(fold);
+    }
     const sessions = lives.filter(live => live.programs.some(program => program.workIds?.includes(work.id)));
     if (sessions.length) {
       const fold = node('details', 'related');

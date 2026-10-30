@@ -5,10 +5,18 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {spawnSync} from 'node:child_process';
 import sharp from 'sharp';
-import {sanitize, serialize, fromNotion, parseAbout, queryAll, getAllBlocks, notionRequest} from '../scripts/content.mjs';
+import {sanitize, serialize, fromNotion, parseAbout, parseWorkVideos, queryAll, getAllBlocks, notionRequest} from '../scripts/content.mjs';
 import {root, downloadCover} from '../scripts/build.mjs';
 
 const snapshot = JSON.parse(await readFile(join(root, 'public-snapshot.json'), 'utf8'));
+test('series reads only explicit video list with one safe link per item', () => {
+  const rich = (content, url) => [{plain_text: content, href: url}];
+  const heading = content => ({type:'heading_2', heading_2:{rich_text:rich(content)}});
+  const item = (content, url) => ({type:'bulleted_list_item', bulleted_list_item:{rich_text:rich(content,url)}});
+  assert.deepEqual(parseWorkVideos([item('private','https://example.com/private'), heading('视频列表'), item('歌曲','https://example.com/video'), heading('备注'), item('private','https://example.com/private')]), [{title:'歌曲',url:'https://example.com/video'}]);
+  assert.throws(() => parseWorkVideos([heading('视频列表'),item('歌曲','javascript:alert(1)')]), /链接/);
+  assert.throws(() => parseWorkVideos([heading('视频列表'),item('歌曲')]), /链接/);
+});
 test('public output uses an allowlist, validates links, dates and relations', () => {
   const input = structuredClone(snapshot);
   input.secret = 'private';
@@ -64,6 +72,21 @@ test('about page only exposes named sections and validates links', async () => {
 function notionFixture() {
   return {works:[{id:'w-1',properties:{'作品名称':field('title',rich('作品')), '封面':field('files',[]),'分类':field('select',{name:'综艺'}),'更新进度':field('rich_text',rich('已完结')),'B站Reaction合集':field('url','https://example.com/collection'),'网盘Reaction链接':field('url',null)}}],lives:[{id:'l-1',properties:{'直播场次':field('title',rich('直播')),'直播日期':field('date',{start:'2026-10-28'}),'B站回放':field('url',null)}}],programs:[{id:'p-1',properties:{'视频标题':field('title',rich('节目')),'所属直播':field('relation',[{id:'l-1'}]),'关联作品':field('relation',[{id:'w-1'}]),'原视频':field('url','https://example.com/original'),'约时长（分钟）':field('number',5),'表内顺序':field('number',1),'推荐人':field('rich_text',rich('不公开'))}}]};
 }
+test('works follow automatically assigned number descending with unspecified entries last', () => {
+  const raw = notionFixture();
+  const later = structuredClone(raw.works[0]); later.id = 'w-2'; later.properties['作品编号'] = field('unique_id', {number:20,prefix:null});
+  const first = structuredClone(raw.works[0]); first.id = 'w-3'; first.properties['作品编号'] = field('unique_id', {number:1,prefix:null});
+  raw.works.push(later, first);
+  assert.deepEqual(fromNotion(raw).data.works.map(w => w.id), ['w2', 'w3', 'w1']);
+});
+test('new works appear first by automatic number without a manual sort field', () => {
+  const raw = notionFixture();
+  raw.works[0].properties['作品编号'] = field('unique_id', {number: 20});
+  const older = structuredClone(raw.works[0]); older.id = 'w-2'; older.properties['作品编号'] = field('unique_id', {number: 1});
+  const newer = structuredClone(raw.works[0]); newer.id = 'w-3'; newer.properties['作品编号'] = field('unique_id', {number: 21});
+  raw.works.push(older, newer);
+  assert.deepEqual(fromNotion(raw).data.works.map(w => w.id), ['w3', 'w1', 'w2']);
+});
 test('Notion progress supports select and legacy text fields', () => {
   const raw = notionFixture();
   assert.equal(fromNotion(raw).data.works[0].progress, '已完结');
