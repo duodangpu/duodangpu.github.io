@@ -80,11 +80,17 @@ export function parseWorkVideos(blocks) {
   return videos;
 }
 export function parseAbout(blocks) {
-  const about = {intro:'', groupUrl:'', qr:'', accounts:[{name:'',url:'',role:''},{name:'',url:'',role:''}]};
+  const about = {intro:'', groupUrl:'', qr:'', accounts:[]};
   let section = '';
+  let account = null;
   let qrUrl = '';
   for (const block of blocks) {
-    if (['heading_1', 'heading_2', 'heading_3'].includes(block.type)) { section = text(block[block.type]); continue; }
+    if (['heading_1', 'heading_2', 'heading_3'].includes(block.type)) {
+      section = text(block[block.type]).trim();
+      account = /^(B站|小红书)账号(?:[一二三四五六七八九十]+|\d+)$/.test(section) ? {name:'', url:'', role:''} : null;
+      if (account) about.accounts.push(account);
+      continue;
+    }
     if (block.type === 'image' && section === 'QQ群') {
       if (qrUrl) fail('关于我们包含多张QQ群图片，请只保留一张');
       qrUrl = safeUrl(block.image?.[block.image.type]?.url);
@@ -97,7 +103,6 @@ export function parseAbout(blocks) {
     const linkedValue = label => value(label) === null ? null : (pieces.find(part => part.href)?.href || value(label));
     if (section === '简介' && value('简介内容') !== null) about.intro = value('简介内容');
     if (section === 'QQ群' && linkedValue('加入链接') !== null) about.groupUrl = safeUrl(linkedValue('加入链接'));
-    const account = section === 'B站账号一' ? about.accounts[0] : section === 'B站账号二' ? about.accounts[1] : null;
     if (account) {
       if (value('账号名称') !== null) account.name = value('账号名称');
       if (value('账号角色') !== null) account.role = value('账号角色');

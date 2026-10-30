@@ -61,6 +61,8 @@ test('about page only exposes named sections and validates links', async () => {
   const result = parseAbout(blocks);
   assert.equal(result.about.intro,'一起看');
   assert.equal(result.about.accounts[0].url,'https://example.com/profile');
+  const more = parseAbout([heading('B站账号1'),paragraph('账号名称：一'),paragraph('主页链接：https://example.com/1'),heading('B站账号3'),paragraph('账号名称：三'),paragraph('主页链接：https://example.com/3'),heading('小红书账号1'),paragraph('账号名称：小红书'),paragraph('主页链接：https://example.com/xhs'),heading('私人账号'),paragraph('账号名称：不公开')]);
+  assert.deepEqual(more.about.accounts.map(account => account.name), ['一', '三', '小红书']);
   assert.equal(result.qrUrl,'https://example.com/temporary');
   assert(!JSON.stringify(result.about).includes('私密内容'));
   assert.throws(() => parseAbout([heading('QQ群'),paragraph('加入链接：javascript:alert(1)')]), /链接/);

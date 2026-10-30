@@ -44,7 +44,8 @@ export async function build({notion = false} = {}) {
     const request = notionRequest(process.env.NOTION_TOKEN);
     const entries = await Promise.all(Object.entries(sources).map(async ([key, id]) => [key, await queryAll(id, request)]));
     ({data, covers} = fromNotion(Object.fromEntries(entries)));
-    for (const work of data.works) work.videos = parseWorkVideos(await getAllBlocks(work.id, request));
+    const seriesIds = new Set(entries.find(([key]) => key === 'works')[1].filter(page => page.properties['展示类型']?.select?.name === '系列').map(page => page.id.replaceAll('-', '')));
+    for (const work of data.works) if (seriesIds.has(work.id)) work.videos = parseWorkVideos(await getAllBlocks(work.id, request));
     const parsed = parseAbout(await getAllBlocks(aboutPage, request));
     data.about = parsed.about;
     qrUrl = parsed.qrUrl;
