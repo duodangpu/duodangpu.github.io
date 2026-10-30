@@ -26,6 +26,8 @@ server.stderr.on('data', chunk => process.stderr.write(chunk));
       const errors = [];
       page.on('pageerror', error => errors.push(error.message));
       await page.goto(url, {waitUntil:'networkidle'});
+      await page.evaluate(() => scrollTo(0, 400));
+      assert.equal(await page.locator('header').evaluate(el => Math.round(el.getBoundingClientRect().top)), 0);
       assert(await page.getByRole('link',{name:'关于我们'}).isVisible());
       assert.match(await page.locator('footer').innerText(), /多多想当当/);
       assert.doesNotMatch(await page.locator('body').innerText(), /小老头|探险家/);
@@ -92,6 +94,7 @@ server.stderr.on('data', chunk => process.stderr.write(chunk));
       await page.getByRole('link',{name:'直播回放',exact:true}).click();
       await page.waitForFunction(() => document.querySelector('nav a[href="#live"]').getAttribute('aria-current') === 'location');
       assert.equal(await page.getByRole('link',{name:'直播回放',exact:true}).getAttribute('aria-current'),'location');
+      assert(await page.locator('#live').evaluate(el => el.getBoundingClientRect().top >= document.querySelector('header').getBoundingClientRect().bottom));
       if (data.lives.length) {
         await page.locator('#live-list .card-open').first().click();
         assert(await page.locator('#live-dialog').isVisible());

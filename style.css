@@ -39,9 +39,9 @@ a { color: inherit; text-decoration: none; }
 button, a, input, summary { -webkit-tap-highlight-color: transparent; }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
 [hidden] { display: none !important; }
-section { scroll-margin-top: 28px; }
+section { scroll-margin-top: 104px; }
 
-header { background: var(--surface); border-bottom: 1px solid var(--line); }
+header { position: sticky; top: 0; z-index: 10; background: var(--surface); border-bottom: 1px solid var(--line); }
 .top {
   max-width: 1280px;
   height: 76px;
@@ -230,6 +230,8 @@ footer span { padding: 0 5px; }
 }
 @media (max-width: 650px) {
   html { scrollbar-gutter: auto; }
+  section { scroll-margin-top: 140px; }
+  html:has(header.search-open) section { scroll-margin-top: 204px; }
   .top { position: relative; height: auto; min-height: 108px; padding: 14px 18px 8px; gap: 4px 14px; flex-wrap: wrap; }
   .brand { font-size: 19px; gap: 8px; }
   .brand-mark { width: 25px; height: 25px; border-radius: 9px; font-size: 10px; }
