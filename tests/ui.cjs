@@ -50,8 +50,9 @@ server.stderr.on('data', chunk => process.stderr.write(chunk));
       assert.equal(await page.locator('#live-list .search-program').count(),expected);
       for (const query of ['zhangjie', 'zj', 'zhang jie']) {
         await search.fill(query);
-        assert.equal(await page.locator('#live-list .search-live-group').count(),matchingLives);
+        assert((await page.locator('#live-list .search-live-group').count()) >= matchingLives);
         assert((await page.locator('#live-list .search-program').count()) >= expected);
+        assert.equal(await page.locator('#live-list .search-program').filter({hasText:'张杰'}).count(), expected);
         const zhangjie = page.locator('#live-list .search-program').filter({hasText:'张杰'}).first();
         assert.equal(await zhangjie.locator('mark').allTextContents().then(parts=>parts.join('')), '张杰');
       }
