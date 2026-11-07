@@ -223,6 +223,8 @@ dialog[open] { animation: dialog-enter 200ms var(--ease); }
 .dialog-info h2 { margin: 0; font: 600 24px/1.5 var(--font-ui); overflow-wrap: anywhere; }
 .dialog-info .tags { margin-top: 14px; }
 .watch-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+.drive-entry { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.drive-hint { color: var(--muted); font-size: 12px; }
 .watch-link { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface-hover); color: #45513e; padding: 10px 15px; font-size: 13px; font-weight: 550; transition: background var(--duration) var(--ease), border-color var(--duration) var(--ease), transform var(--duration) var(--ease); }
 .related { margin-top: 28px; border-top: 1px solid var(--line); padding-top: 18px; font-size: 14px; }
 .related summary { cursor: pointer; padding: 8px 0; }

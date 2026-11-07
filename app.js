@@ -95,7 +95,11 @@
     links.replaceChildren();
     for (const [label, url] of [['B站观看 ↗', work.bilibili], ['网盘观看 ↗', work.drive]]) {
       const entry = link(label, url, 'watch-link');
-      if (entry) links.append(entry);
+      if (entry && label === '网盘观看 ↗') {
+        const group = node('div', 'drive-entry');
+        group.append(entry, node('span', 'drive-hint', '提取码请在社群获取'));
+        links.append(group);
+      } else if (entry) links.append(entry);
     }
     if (!links.childElementCount && !work.videos?.length) links.append(node('span', 'pending', '观看入口待更新'));
     const related = document.querySelector('#related-lives');
