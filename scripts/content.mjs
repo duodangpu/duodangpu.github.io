@@ -124,7 +124,7 @@ export function parseAbout(blocks) {
 }
 export function serialize(data) {
   const index = title => ({searchPinyin: [pinyin(title, {toneType: 'none'}), pinyin(title, {pattern: 'first', toneType: 'none'})], searchTokens: pinyin(title, {toneType: 'none', type: 'array'})});
-  const indexed = {...data, works: data.works.map(work => ({...work, ...index(work.title)})), lives: data.lives.map(live => ({...live, ...index(live.title), programs: live.programs.map(program => ({...program, ...index(program.title)}))}))};
+  const indexed = {...data, works: data.works.map(work => ({...work, ...index(work.title), videos: work.videos.map(video => ({...video, ...index(video.title)}))})), lives: data.lives.map(live => ({...live, ...index(live.title), programs: live.programs.map(program => ({...program, ...index(program.title)}))}))};
   return `window.SITE_DATA = ${JSON.stringify(indexed).replaceAll('<', '\\u003c').replaceAll('\u2028', '\\u2028').replaceAll('\u2029', '\\u2029')};\n`;
 }
 const required = (properties, name, type) => {

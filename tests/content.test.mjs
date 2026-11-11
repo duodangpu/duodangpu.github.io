@@ -143,9 +143,11 @@ test('script serialization cannot terminate a script element', () => {
 test('public search index includes full pinyin and initials', () => {
   const input = structuredClone(snapshot);
   input.works[0].title = '甄嬛传';
+  input.works[0].videos = [{title:'张杰的歌', url:'https://example.com/song'}];
   input.lives[0].programs[0].title = '张杰';
   const data = JSON.parse(serialize(sanitize(input)).slice('window.SITE_DATA = '.length).trim().replace(/;$/, ''));
   assert.deepEqual(data.works[0].searchPinyin, ['zhen xuan zhuan', 'z x z']);
+  assert.deepEqual(data.works[0].videos[0].searchPinyin, ['zhang jie de ge', 'z j d g']);
   assert.deepEqual(data.lives[0].programs[0].searchPinyin, ['zhang jie', 'z j']);
 });
 test('cover downloader checks MIME and actual signature', async () => {

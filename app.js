@@ -6,6 +6,8 @@
   const grid = document.querySelector('#work-grid');
   const filters = document.querySelector('#filters');
   const search = document.querySelector('#search');
+  const liveRange = document.querySelector('#live-range');
+  const liveDate = document.querySelector('#live-date-filter');
   const dialog = document.querySelector('#work-dialog');
   const liveDialog = document.querySelector('#live-dialog');
   const searchToggle = document.querySelector('.search-toggle');
@@ -136,10 +138,32 @@
   }
   function renderWorks() {
     grid.replaceChildren();
-    const found = works.filter(work => (category === '全部' || work.category === category) && matches(work.title, work.searchPinyin));
+    const query = normalized(search.value);
+    const found = works.filter(work => (category === '全部' || work.category === category) && (!query || matches(work.title, work.searchPinyin) || work.videos?.some(video => matches(video.title, video.searchPinyin))));
     document.querySelector('#work-count').textContent = `${found.length} 部作品`;
     document.querySelector('#empty-works').hidden = found.length > 0;
     found.forEach((work, index) => {
+      const videos = query ? (work.videos || []).filter(video => matches(video.title, video.searchPinyin)) : [];
+      if (videos.length) {
+        const group = node('section', 'search-live-group search-work-group');
+        const header = node('div', 'search-live-header');
+        const heading = node('h3', 'search-live-date');
+        const details = node('button', 'search-live-detail', work.title);
+        details.type = 'button';
+        details.addEventListener('click', () => showWork(work, details));
+        heading.append(details);
+        header.append(heading);
+        group.append(header);
+        videos.forEach(video => {
+          const row = node('div', 'search-program');
+          const title = node('span', 'program-title');
+          highlight(title, video.title, video.searchTokens);
+          row.append(title, link('B站观看 ↗', video.url, 'program-link') || node('span', 'pending', '链接待更新'));
+          group.append(row);
+        });
+        grid.append(group);
+        return;
+      }
       const card = node('article', 'work-card');
       const button = node('button', 'card-open');
       button.type = 'button';
@@ -177,7 +201,13 @@
     list.replaceChildren();
     let count = 0;
     const query = normalized(search.value);
+    const today = new Date();
+    const localDate = date => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    const end = localDate(today);
+    const startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 6);
+    const start = localDate(startDate);
     lives.forEach(live => {
+      if (!query && (liveDate.value ? live.date !== liveDate.value : liveRange.value === 'week' && (live.date < start || live.date > end))) return;
       const sessionMatch = matches(`${live.title} ${live.date}`, live.searchPinyin);
       const programs = (live.programs || []).filter(program => !query || sessionMatch || matches(program.title, program.searchPinyin));
       if (query && !sessionMatch && !programs.length) return;
@@ -246,6 +276,8 @@
     filters.append(button);
   });
   search.addEventListener('input', () => { renderWorks(); renderLives(); });
+  liveRange.addEventListener('change', () => { liveDate.value = ''; renderLives(); });
+  liveDate.addEventListener('change', renderLives);
   searchToggle.addEventListener('click', () => {
     const expanded = searchToggle.getAttribute('aria-expanded') !== 'true';
     searchToggle.setAttribute('aria-expanded', String(expanded));
