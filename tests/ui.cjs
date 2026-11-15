@@ -92,9 +92,20 @@ server.stderr.on('data', chunk => process.stderr.write(chunk));
       assert(await page.locator('#work-dialog').isVisible());
       const first = data.works[0];
       assert.equal(await page.locator('#dialog-title').innerText(),first.title);
-      assert.equal(await page.locator('#dialog-links a').count(),[first.bilibili,first.drive].filter(Boolean).length);
-      assert.equal(await page.locator('#dialog-links .drive-hint').count(), first.drive ? 1 : 0);
-      if (first.bilibili) assert.equal(await page.getByRole('link',{name:'B站观看 ↗',exact:true}).getAttribute('href'),first.bilibili);
+      const validUrl = value => {
+        try {
+          const parsed = new URL(value);
+          return ['http:', 'https:'].includes(parsed.protocol) && !parsed.username && !parsed.password ? parsed.href : '';
+        } catch { return ''; }
+      };
+      const links = [['B站观看 ↗', first.bilibili], ['百度网盘总目录 ↗', first.drive], ['夸克网盘总目录 ↗', first.quark]];
+      assert.equal(await page.locator('#dialog-links a').count(),links.filter(([, value])=>validUrl(value)).length);
+      assert.equal(await page.locator('#dialog-links .drive-hint').count(),links.slice(1).filter(([, value])=>validUrl(value)).length);
+      for (const [name, value] of links) {
+        const entry = page.getByRole('link',{name,exact:true});
+        if (validUrl(value)) assert.equal(await entry.getAttribute('href'),validUrl(value));
+        else assert.equal(await entry.count(),0);
+      }
       await page.keyboard.press('Escape');
       assert(await card.evaluate(element=>element===document.activeElement));
       await card.click();
