@@ -36,7 +36,7 @@ export function sanitize(input) {
   const works = input.works.map(work => {
     const cover = string(work.cover);
     if (cover && !/^media\/[a-zA-Z0-9_-]+\.(jpg|jpeg|png|webp|gif)$/.test(cover)) fail('封面必须是本地 media 文件');
-    return {id: cleanId(work.id), title: title(work.title), category: string(work.category), progress: string(work.progress), bilibili: safeUrl(work.bilibili), drive: safeUrl(work.drive), cover, videos: (work.videos || []).map(video => ({title: title(video.title), url: safeUrl(video.url)}))};
+    return {id: cleanId(work.id), title: title(work.title), category: string(work.category), progress: string(work.progress), bilibili: safeUrl(work.bilibili), drive: safeUrl(work.drive), quark: safeUrl(work.quark), cover, videos: (work.videos || []).map(video => ({title: title(video.title), url: safeUrl(video.url)}))};
   });
   unique(works, '作品');
   const workIds = new Set(works.map(work => work.id));
@@ -156,7 +156,7 @@ export function fromNotion(raw) {
     if (number && number.type !== 'unique_id') fail('Notion 字段 作品编号 应为 unique_id');
     const numberValue = number?.unique_id?.number ?? null;
     if (numberValue !== null && (!Number.isSafeInteger(numberValue) || numberValue < 0)) fail('作品编号无效');
-    return {id, title: text(required(p, '作品名称', 'title')), category: required(p, '分类', 'select').select?.name || '', progress: progress.type === 'select' ? progress.select?.name || '' : text(progress), bilibili: required(p, 'B站Reaction合集', 'url').url, drive: required(p, '网盘Reaction链接', 'url').url, cover: '', number: numberValue};
+    return {id, title: text(required(p, '作品名称', 'title')), category: required(p, '分类', 'select').select?.name || '', progress: progress.type === 'select' ? progress.select?.name || '' : text(progress), bilibili: required(p, 'B站Reaction合集', 'url').url, drive: required(p, '网盘Reaction链接', 'url').url, quark: required(p, '夸克网盘链接', 'url').url, cover: '', number: numberValue};
   });
   works.sort((a, b) => (b.number ?? -Infinity) - (a.number ?? -Infinity));
   const lives = active(raw.lives).map(page => {

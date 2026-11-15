@@ -80,8 +80,16 @@ test('about page only exposes named sections and validates links', async () => {
   assert.match(requests[1],/start_cursor=next/);
 });
 function notionFixture() {
-  return {works:[{id:'w-1',properties:{'作品名称':field('title',rich('作品')), '封面':field('files',[]),'分类':field('select',{name:'综艺'}),'更新进度':field('rich_text',rich('已完结')),'B站Reaction合集':field('url','https://example.com/collection'),'网盘Reaction链接':field('url',null)}}],lives:[{id:'l-1',properties:{'直播场次':field('title',rich('直播')),'直播日期':field('date',{start:'2026-10-28'}),'B站回放':field('url',null)}}],programs:[{id:'p-1',properties:{'视频标题':field('title',rich('节目')),'所属直播':field('relation',[{id:'l-1'}]),'关联作品':field('relation',[{id:'w-1'}]),'原视频':field('url','https://example.com/original'),'约时长（分钟）':field('number',5),'表内顺序':field('number',1),'推荐人':field('rich_text',rich('不公开'))}}]};
+  return {works:[{id:'w-1',properties:{'作品名称':field('title',rich('作品')), '封面':field('files',[]),'分类':field('select',{name:'综艺'}),'更新进度':field('rich_text',rich('已完结')),'B站Reaction合集':field('url','https://example.com/collection'),'网盘Reaction链接':field('url',null),'夸克网盘链接':field('url',null)}}],lives:[{id:'l-1',properties:{'直播场次':field('title',rich('直播')),'直播日期':field('date',{start:'2026-10-28'}),'B站回放':field('url',null)}}],programs:[{id:'p-1',properties:{'视频标题':field('title',rich('节目')),'所属直播':field('relation',[{id:'l-1'}]),'关联作品':field('relation',[{id:'w-1'}]),'原视频':field('url','https://example.com/original'),'约时长（分钟）':field('number',5),'表内顺序':field('number',1),'推荐人':field('rich_text',rich('不公开'))}}]};
 }
+test('Quark links are optional values and must be valid URLs', () => {
+  const raw = notionFixture();
+  assert.equal(fromNotion(raw).data.works[0].quark, '');
+  raw.works[0].properties['夸克网盘链接'].url = 'https://pan.quark.cn/s/example';
+  assert.equal(fromNotion(raw).data.works[0].quark, 'https://pan.quark.cn/s/example');
+  raw.works[0].properties['夸克网盘链接'].url = 'javascript:alert(1)';
+  assert.throws(() => fromNotion(raw), /链接/);
+});
 test('works follow automatically assigned number descending with unspecified entries last', () => {
   const raw = notionFixture();
   const later = structuredClone(raw.works[0]); later.id = 'w-2'; later.properties['作品编号'] = field('unique_id', {number:20,prefix:null});
