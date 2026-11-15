@@ -3,7 +3,7 @@ import {fileURLToPath, pathToFileURL} from 'node:url';
 import {dirname, join, resolve} from 'node:path';
 import {createHash} from 'node:crypto';
 import sharp from 'sharp';
-import {sanitize, serialize, sources, aboutPage, fromNotion, parseAbout, parseWorkVideos, notionRequest, queryAll, getAllBlocks} from './content.mjs';
+import {sanitize, serialize, sources, aboutPage, drivePage, fromNotion, parseAbout, parseDriveDirectories, parseWorkVideos, notionRequest, queryAll, getAllBlocks} from './content.mjs';
 
 export const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const types = {'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif'};
@@ -43,7 +43,8 @@ export async function build({notion = false} = {}) {
   if (notion) {
     const request = notionRequest(process.env.NOTION_TOKEN);
     const entries = await Promise.all(Object.entries(sources).map(async ([key, id]) => [key, await queryAll(id, request)]));
-    ({data, covers} = fromNotion(Object.fromEntries(entries)));
+    const directories = parseDriveDirectories(await getAllBlocks(drivePage, request));
+    ({data, covers} = fromNotion(Object.fromEntries(entries), directories));
     const seriesIds = new Set(entries.find(([key]) => key === 'works')[1].filter(page => page.properties['展示类型']?.select?.name === '系列').map(page => page.id.replaceAll('-', '')));
     for (const work of data.works) if (seriesIds.has(work.id)) work.videos = parseWorkVideos(await getAllBlocks(work.id, request));
     const parsed = parseAbout(await getAllBlocks(aboutPage, request));

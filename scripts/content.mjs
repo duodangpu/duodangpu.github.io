@@ -8,6 +8,7 @@ export const sources = {
   programs: 'a5df2d9c-6e1e-4434-82d2-39b282df57a6'
 };
 export const aboutPage = '40807982-2892-81cb-b7ed-cce000e01baa';
+export const drivePage = '41907982-2892-8193-8944-d0d797898044';
 export const cleanId = value => String(value || '').replaceAll('-', '');
 const text = field => (field?.title || field?.rich_text || []).map(part => part.plain_text ?? part.text?.content ?? '').join('');
 const fail = message => { throw new Error(message); };
@@ -80,6 +81,22 @@ export function parseWorkVideos(blocks) {
   }
   return videos;
 }
+export function parseDriveDirectories(blocks) {
+  const result = {baidu: '', quark: ''};
+  for (const block of blocks) {
+    if (block.type !== 'paragraph') continue;
+    const line = text(block.paragraph);
+    const match = line.match(/^(百度总目录|夸克总目录)[:：]\s*(.*)$/);
+    if (!match) continue;
+    const key = match[1] === '百度总目录' ? 'baidu' : 'quark';
+    if (result[key]) fail('网盘总目录重复');
+    const links = [...new Set((block.paragraph.rich_text || []).map(part => part.href || part.text?.link?.url).filter(Boolean))];
+    if (links.length > 1) fail('网盘总目录只能填写一个链接');
+    result[key] = safeUrl(links[0] || match[2].trim());
+  }
+  if (!result.baidu || !result.quark) fail('请填写百度和夸克网盘总目录');
+  return result;
+}
 export function parseAbout(blocks) {
   const about = {intro:'', letter:[], groupUrl:'', qr:'', donations:[], accounts:[]};
   let section = '';
@@ -138,7 +155,7 @@ function relations(field) {
   if (field.type !== 'relation' || field.has_more) fail('Notion 关联不完整，停止发布');
   return field.relation.map(item => cleanId(item.id));
 }
-export function fromNotion(raw) {
+export function fromNotion(raw, directories) {
   const covers = [];
   const works = active(raw.works).map(page => {
     const p = page.properties;
@@ -156,7 +173,10 @@ export function fromNotion(raw) {
     if (number && number.type !== 'unique_id') fail('Notion 字段 作品编号 应为 unique_id');
     const numberValue = number?.unique_id?.number ?? null;
     if (numberValue !== null && (!Number.isSafeInteger(numberValue) || numberValue < 0)) fail('作品编号无效');
-    return {id, title: text(required(p, '作品名称', 'title')), category: required(p, '分类', 'select').select?.name || '', progress: progress.type === 'select' ? progress.select?.name || '' : text(progress), bilibili: required(p, 'B站Reaction合集', 'url').url, drive: required(p, '网盘Reaction链接', 'url').url, quark: required(p, '夸克网盘链接', 'url').url, cover: '', number: numberValue};
+    const drive = required(p, '展示百度网盘', 'checkbox').checkbox ? safeUrl(directories?.baidu) : '';
+    const quark = required(p, '展示夸克网盘', 'checkbox').checkbox ? safeUrl(directories?.quark) : '';
+    if ((p['展示百度网盘'].checkbox && !drive) || (p['展示夸克网盘'].checkbox && !quark)) fail('已勾选的网盘缺少总目录链接');
+    return {id, title: text(required(p, '作品名称', 'title')), category: required(p, '分类', 'select').select?.name || '', progress: progress.type === 'select' ? progress.select?.name || '' : text(progress), bilibili: required(p, 'B站Reaction合集', 'url').url, drive, quark, cover: '', number: numberValue};
   });
   works.sort((a, b) => (b.number ?? -Infinity) - (a.number ?? -Infinity));
   const lives = active(raw.lives).map(page => {

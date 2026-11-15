@@ -5,7 +5,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {spawnSync} from 'node:child_process';
 import sharp from 'sharp';
-import {sanitize, serialize, fromNotion, parseAbout, parseWorkVideos, queryAll, getAllBlocks, notionRequest} from '../scripts/content.mjs';
+import {sanitize, serialize, fromNotion, parseAbout, parseDriveDirectories, parseWorkVideos, queryAll, getAllBlocks, notionRequest} from '../scripts/content.mjs';
 import {root, downloadCover} from '../scripts/build.mjs';
 
 const snapshot = JSON.parse(await readFile(join(root, 'public-snapshot.json'), 'utf8'));
@@ -80,15 +80,25 @@ test('about page only exposes named sections and validates links', async () => {
   assert.match(requests[1],/start_cursor=next/);
 });
 function notionFixture() {
-  return {works:[{id:'w-1',properties:{'作品名称':field('title',rich('作品')), '封面':field('files',[]),'分类':field('select',{name:'综艺'}),'更新进度':field('rich_text',rich('已完结')),'B站Reaction合集':field('url','https://example.com/collection'),'网盘Reaction链接':field('url',null),'夸克网盘链接':field('url',null)}}],lives:[{id:'l-1',properties:{'直播场次':field('title',rich('直播')),'直播日期':field('date',{start:'2026-10-28'}),'B站回放':field('url',null)}}],programs:[{id:'p-1',properties:{'视频标题':field('title',rich('节目')),'所属直播':field('relation',[{id:'l-1'}]),'关联作品':field('relation',[{id:'w-1'}]),'原视频':field('url','https://example.com/original'),'约时长（分钟）':field('number',5),'表内顺序':field('number',1),'推荐人':field('rich_text',rich('不公开'))}}]};
+  return {works:[{id:'w-1',properties:{'作品名称':field('title',rich('作品')), '封面':field('files',[]),'分类':field('select',{name:'综艺'}),'更新进度':field('rich_text',rich('已完结')),'B站Reaction合集':field('url','https://example.com/collection'),'网盘Reaction链接':field('url',null),'夸克网盘链接':field('url',null),'展示百度网盘':field('checkbox',false),'展示夸克网盘':field('checkbox',false)}}],lives:[{id:'l-1',properties:{'直播场次':field('title',rich('直播')),'直播日期':field('date',{start:'2026-10-28'}),'B站回放':field('url',null)}}],programs:[{id:'p-1',properties:{'视频标题':field('title',rich('节目')),'所属直播':field('relation',[{id:'l-1'}]),'关联作品':field('relation',[{id:'w-1'}]),'原视频':field('url','https://example.com/original'),'约时长（分钟）':field('number',5),'表内顺序':field('number',1),'推荐人':field('rich_text',rich('不公开'))}}]};
 }
-test('Quark links are optional values and must be valid URLs', () => {
+test('directory links follow independent checkboxes', () => {
   const raw = notionFixture();
-  assert.equal(fromNotion(raw).data.works[0].quark, '');
-  raw.works[0].properties['夸克网盘链接'].url = 'https://pan.quark.cn/s/example';
-  assert.equal(fromNotion(raw).data.works[0].quark, 'https://pan.quark.cn/s/example');
-  raw.works[0].properties['夸克网盘链接'].url = 'javascript:alert(1)';
-  assert.throws(() => fromNotion(raw), /链接/);
+  const dirs = {baidu:'https://example.com/baidu',quark:'https://example.com/quark'};
+  assert.equal(fromNotion(raw, dirs).data.works[0].quark, '');
+  raw.works[0].properties['展示夸克网盘'].checkbox = true;
+  assert.equal(fromNotion(raw, dirs).data.works[0].quark, dirs.quark);
+  assert.equal(fromNotion(raw, dirs).data.works[0].drive, '');
+  raw.works[0].properties['展示百度网盘'].checkbox = true;
+  assert.equal(fromNotion(raw, dirs).data.works[0].drive, dirs.baidu);
+  assert.throws(() => fromNotion(raw, {baidu:'',quark:dirs.quark}), /总目录/);
+  assert.throws(() => fromNotion(raw, {baidu:'javascript:alert(1)',quark:dirs.quark}), /链接/);
+});
+test('directory page accepts linked or plain URLs and requires both', () => {
+  const paragraph = value => ({type:'paragraph',paragraph:{rich_text:rich(value)}});
+  const blocks = [paragraph('百度总目录：https://example.com/baidu'),paragraph('夸克总目录：https://example.com/quark')];
+  assert.deepEqual(parseDriveDirectories(blocks), {baidu:'https://example.com/baidu',quark:'https://example.com/quark'});
+  assert.throws(() => parseDriveDirectories(blocks.slice(0,1)), /总目录/);
 });
 test('works follow automatically assigned number descending with unspecified entries last', () => {
   const raw = notionFixture();

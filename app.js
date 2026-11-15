@@ -95,9 +95,9 @@
     document.querySelector('#dialog-tags').replaceChildren(...tags(work).childNodes);
     const links = document.querySelector('#dialog-links');
     links.replaceChildren();
-    for (const [label, url] of [['B站观看 ↗', work.bilibili], ['百度网盘 ↗', work.drive], ['夸克网盘 ↗', work.quark]]) {
+    for (const [label, url] of [['B站观看 ↗', work.bilibili], ['百度网盘总目录 ↗', work.drive], ['夸克网盘总目录 ↗', work.quark]]) {
       const entry = link(label, url, 'watch-link');
-      if (entry && label === '百度网盘 ↗') {
+      if (entry && label !== 'B站观看 ↗') {
         const group = node('div', 'drive-entry');
         group.append(entry, node('span', 'drive-hint', '提取码请在社群获取'));
         links.append(group);
