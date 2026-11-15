@@ -221,14 +221,27 @@ dialog::backdrop { background: rgb(34 40 30 / 25%); backdrop-filter: blur(5px); 
 dialog[open] { animation: dialog-enter 200ms var(--ease); }
 .close { display: grid; place-items: center; position: absolute; right: 14px; top: 12px; width: 44px; height: 44px; padding: 0; border: 0; border-radius: var(--radius-md); background: transparent; color: #70776b; transition: background var(--duration) var(--ease), color var(--duration) var(--ease); }
 .close svg { width: 18px; height: 18px; }
-.dialog-layout { display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 26px; align-items: center; }
-.dialog-art .artwork { border-radius: var(--radius-md); }
+#work-dialog { width: min(600px, calc(100% - 40px)); padding: 0 0 30px; }
+#work-dialog .close { z-index: 2; background: rgb(255 255 255 / 92%); box-shadow: 0 2px 12px rgb(23 31 20 / 12%); }
+.dialog-layout { display: block; }
+.dialog-art .artwork { aspect-ratio: 4 / 3; background: #e9ece6; }
+.dialog-art .artwork::after { content: ''; position: absolute; inset: 0; box-shadow: inset 0 0 18px 2px rgb(255 255 255 / 35%); background: linear-gradient(to bottom, transparent 90%, rgb(255 255 255 / 25%) 96%, var(--surface)); pointer-events: none; }
+.dialog-layout .dialog-info { padding: 24px 32px 0; }
+#related-lives { padding: 0 32px; }
 .dialog-info h2 { margin: 0; font: 600 24px/1.5 var(--font-ui); overflow-wrap: anywhere; }
 .dialog-info .tags { margin-top: 14px; }
 .watch-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
-.drive-entry { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.drive-hint { color: var(--muted); font-size: 12px; }
+#dialog-links { display: grid; gap: 20px; }
+.watch-section { min-width: 0; }
+.watch-section + .watch-section { padding-top: 17px; border-top: 1px solid var(--line); }
+.watch-heading { margin: 0 0 10px; font-size: 13px; font-weight: 600; color: var(--ink); }
+.drive-hint { margin: -2px 0 10px; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.watch-buttons { display: flex; flex-wrap: wrap; gap: 9px; }
 .watch-link { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface-hover); color: #45513e; padding: 10px 15px; font-size: 13px; font-weight: 550; transition: background var(--duration) var(--ease), border-color var(--duration) var(--ease), transform var(--duration) var(--ease); }
+.platform-link { background: #fff; border-color: #e2e6de; color: #343c34; box-shadow: 0 2px 6px rgb(30 40 28 / 6%); }
+.bilibili-link { color: #a24c66; background: #fff8fa; border-color: #f0e0e5; }
+.baidu-link { color: #345e9b; background: #f8fbff; border-color: #dee7f4; }
+.quark-link { color: #416b5b; background: #f7fcf9; border-color: #deebe4; }
 .related { margin-top: 28px; border-top: 1px solid var(--line); padding-top: 18px; font-size: 14px; }
 .related summary { cursor: pointer; padding: 8px 0; }
 .related summary::marker { color: var(--muted); }
@@ -250,6 +263,7 @@ footer span { padding: 0 5px; }
   .work-card:has(.card-open:active) { transform: scale(.992); }
   .program-link:hover { text-decoration: underline; color: var(--ink); }
   .watch-link:hover { background: #e9ede4; border-color: #dce2d5; }
+  .platform-link:hover { background: #fff; border-color: #cbd4c8; box-shadow: 0 4px 12px rgb(30 40 28 / 10%); }
 }
 
 @media (min-width: 651px) and (max-width: 1100px) {
@@ -315,7 +329,11 @@ footer span { padding: 0 5px; }
   #letter-dialog h2 { font-size: 24px; margin-bottom: 28px; }
   dialog .close { position: sticky; top: 0; float: right; z-index: 2; margin: -8px -8px 0 0; background: var(--surface); box-shadow: 0 2px 12px rgb(23 31 20 / 10%); }
   dialog .close + * { clear: both; }
-  .dialog-layout { grid-template-columns: 1fr; gap: 22px; }
+  #work-dialog { width: min(440px, calc(100% - 48px)); padding: 0 0 24px; }
+  #work-dialog .close { margin: 12px 12px -56px 0; }
+  #work-dialog .close + .dialog-layout { clear: none; }
+  .dialog-layout .dialog-info { padding: 20px 22px 0; }
+  #related-lives { padding: 0 22px; }
   .dialog-info h2 { font-size: 21px; }
   .dialog-info .tags { margin-top: 12px; }
   .watch-links { margin-top: 20px; }

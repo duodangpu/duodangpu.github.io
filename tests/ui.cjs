@@ -98,9 +98,11 @@ server.stderr.on('data', chunk => process.stderr.write(chunk));
           return ['http:', 'https:'].includes(parsed.protocol) && !parsed.username && !parsed.password ? parsed.href : '';
         } catch { return ''; }
       };
-      const links = [['B站观看 ↗', first.bilibili], ['百度网盘总目录 ↗', first.drive], ['夸克网盘总目录 ↗', first.quark]];
+      const links = [['B站观看 ↗', first.bilibili], ['百度 ↗', first.drive], ['夸克 ↗', first.quark]];
       assert.equal(await page.locator('#dialog-links a').count(),links.filter(([, value])=>validUrl(value)).length);
-      assert.equal(await page.locator('#dialog-links .drive-hint').count(),links.slice(1).filter(([, value])=>validUrl(value)).length);
+      assert.equal(await page.locator('#dialog-links .drive-hint').count(),links.slice(1).some(([, value])=>validUrl(value)) ? 1 : 0);
+      assert.equal(await page.locator('#dialog-links .online-section').count(),validUrl(first.bilibili) ? 1 : 0);
+      assert.equal(await page.locator('#dialog-links .drive-section').count(),links.slice(1).some(([, value])=>validUrl(value)) ? 1 : 0);
       for (const [name, value] of links) {
         const entry = page.getByRole('link',{name,exact:true});
         if (validUrl(value)) assert.equal(await entry.getAttribute('href'),validUrl(value));
@@ -161,6 +163,23 @@ server.stderr.on('data', chunk => process.stderr.write(chunk));
     assert(!await sortedPage.evaluate(()=>document.documentElement.scrollWidth>innerWidth));
     await sortedPage.screenshot({path:path.join(results,'live-stacked-mobile.png'),fullPage:true});
     await sortedPage.close();
+    const linksPage = await browser.newPage({viewport:{width:390,height:844}});
+    const linksMock = {...mock, works:[
+      {...mock.works[0], id:'both', title:'双网盘作品', bilibili:'https://www.bilibili.com/video/example'},
+      {...mock.works[0], id:'online', title:'仅在线观看', bilibili:'https://www.bilibili.com/video/example', drive:'', quark:''},
+      {...mock.works[0], id:'quark', title:'仅夸克网盘', bilibili:'', drive:''},
+    ]};
+    await linksPage.route('**/data.js',route=>route.fulfill({contentType:'application/javascript',body:`window.SITE_DATA=${JSON.stringify(linksMock)};`}));
+    await linksPage.goto(url,{waitUntil:'networkidle'});
+    for (const [index, onlineCount, driveCount] of [[0,1,2],[1,1,0],[2,0,1]]) {
+      await linksPage.locator('#work-grid .card-open').nth(index).click();
+      assert.equal(await linksPage.locator('#dialog-links .online-section').count(),onlineCount);
+      assert.equal(await linksPage.locator('#dialog-links .drive-section .watch-link').count(),driveCount);
+      assert.equal(await linksPage.locator('#dialog-links .drive-hint').count(),driveCount ? 1 : 0);
+      if (index === 0) await linksPage.screenshot({path:path.join(results,'watch-links-mobile.png')});
+      await linksPage.keyboard.press('Escape');
+    }
+    await linksPage.close();
     for (const width of [1440, 390, 320]) {
       const aboutPage = await browser.newPage({viewport:{width,height:844}});
       await aboutPage.route('**/data.js',route=>route.fulfill({contentType:'application/javascript',body:`window.SITE_DATA=${JSON.stringify(mock)};`}));
@@ -229,9 +248,11 @@ server.stderr.on('data', chunk => process.stderr.write(chunk));
     await fixture.getByText('视频列表 · 1').click();
     assert(await fixture.getByText('张杰的歌').isVisible());
     assert.equal(await fixture.locator('#related-lives .program-link').getAttribute('href'),'https://example.com/song');
-    assert.equal(await fixture.getByRole('link',{name:'百度网盘总目录 ↗'}).getAttribute('rel'),'noopener noreferrer');
-    assert.equal(await fixture.getByRole('link',{name:'夸克网盘总目录 ↗'}).getAttribute('href'),'https://pan.quark.cn/s/example');
-    assert.equal(await fixture.locator('#dialog-links .drive-hint').count(), 2);
+    assert.equal(await fixture.getByRole('link',{name:'百度 ↗'}).getAttribute('rel'),'noopener noreferrer');
+    assert.equal(await fixture.getByRole('link',{name:'夸克 ↗'}).getAttribute('href'),'https://pan.quark.cn/s/example');
+    assert.equal(await fixture.locator('#dialog-links .drive-hint').count(), 1);
+    assert.equal(await fixture.locator('#dialog-links .online-section').count(), 0);
+    assert.equal(await fixture.locator('#dialog-links .drive-section .watch-link').count(), 2);
     assert(!await fixture.locator('.related').evaluate(element=>element.open));
     await fixture.locator('.related summary').click();
     assert.equal(await fixture.locator('.related .watch-link').getAttribute('href'),'https://example.com/reaction');

@@ -95,13 +95,19 @@
     document.querySelector('#dialog-tags').replaceChildren(...tags(work).childNodes);
     const links = document.querySelector('#dialog-links');
     links.replaceChildren();
-    for (const [label, url] of [['B站观看 ↗', work.bilibili], ['百度网盘总目录 ↗', work.drive], ['夸克网盘总目录 ↗', work.quark]]) {
-      const entry = link(label, url, 'watch-link');
-      if (entry && label !== 'B站观看 ↗') {
-        const group = node('div', 'drive-entry');
-        group.append(entry, node('span', 'drive-hint', '提取码请在社群获取'));
-        links.append(group);
-      } else if (entry) links.append(entry);
+    const online = link('B站观看 ↗', work.bilibili, 'watch-link platform-link bilibili-link');
+    const drives = [link('百度 ↗', work.drive, 'watch-link platform-link baidu-link'), link('夸克 ↗', work.quark, 'watch-link platform-link quark-link')].filter(Boolean);
+    if (online) {
+      const section = node('section', 'watch-section online-section');
+      section.append(node('h3', 'watch-heading', '在线观看'), online);
+      links.append(section);
+    }
+    if (drives.length) {
+      const section = node('section', 'watch-section drive-section');
+      const buttons = node('div', 'watch-buttons');
+      buttons.append(...drives);
+      section.append(node('h3', 'watch-heading', '网盘观看'), node('p', 'drive-hint', '提取码请在社群获取'), buttons);
+      links.append(section);
     }
     if (!links.childElementCount && !work.videos?.length) links.append(node('span', 'pending', '观看入口待更新'));
     const related = document.querySelector('#related-lives');
