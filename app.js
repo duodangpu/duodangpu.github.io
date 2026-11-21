@@ -1,6 +1,7 @@
 (() => {
   if (location.hash === '#about') { location.replace('about.html'); return; }
   const data = window.SITE_DATA || {works: [], lives: []};
+  const liveArchiveUrl = 'https://space.bilibili.com/526956121';
   const works = data.works || [];
   const lives = [...(data.lives || [])].sort((a, b) => b.date.localeCompare(a.date));
   const grid = document.querySelector('#work-grid');
@@ -132,7 +133,7 @@
       for (const live of sessions) {
         const row = node('div', 'related-session');
         row.append(node('h3', '', live.title || live.date));
-        row.append(link('观看完整回放 ↗', live.replay, 'watch-link') || node('span', 'pending', '回放待更新'));
+        row.append(link('前往B站空间查看回放 ↗', liveArchiveUrl, 'watch-link'));
         const titles = live.programs.filter(program => program.workIds?.includes(work.id)).map(program => program.title);
         row.append(node('p', '', titles.join(' / ')));
         fold.append(row);
@@ -187,7 +188,7 @@
   function showLive(live, button, programs = live.programs || []) {
     opener = button;
     document.querySelector('#live-dialog-title').textContent = live.title || `${live.date} 直播`;
-    document.querySelector('#live-dialog-link').replaceChildren(link('观看完整回放 ↗', live.replay, 'watch-link') || node('span', 'pending', '回放待更新'));
+    document.querySelector('#live-dialog-link').replaceChildren(link('前往B站空间查看回放 ↗', liveArchiveUrl, 'watch-link'));
     const fold = liveDialog.querySelector('.live-programs');
     fold.open = false;
     fold.querySelector('summary').textContent = `节目单 · ${programs.length}`;
@@ -227,7 +228,7 @@
         details.type = 'button';
         details.addEventListener('click', () => showLive(live, details));
         heading.append(details);
-        header.append(heading, link('观看完整回放 ↗', live.replay, 'program-link') || node('span', 'pending', '回放待更新'));
+        header.append(heading, link('前往B站空间查看回放 ↗', liveArchiveUrl, 'program-link'));
         group.append(header);
         matchedPrograms.forEach(program => {
           const row = node('div', 'search-program');
@@ -254,7 +255,7 @@
       highlight(name, live.title || `${live.date} 直播`, live.searchTokens);
       const total = live.programs?.length || 0;
       const labels = node('div', 'tags');
-      labels.append(node('span', '', query && !sessionMatch ? `${programs.length} 个匹配` : `${total} 个节目`), node('span', safeUrl(live.replay) ? 'sage' : 'warm', safeUrl(live.replay) ? '回放已更新' : '回放待更新'));
+      labels.append(node('span', '', query && !sessionMatch ? `${programs.length} 个匹配` : `${total} 个节目`));
       body.append(name, labels);
       const arrow = node('span', 'live-card-arrow', '↗'); arrow.setAttribute('aria-hidden', 'true');
       button.append(date, body, arrow);
