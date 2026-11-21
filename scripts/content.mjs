@@ -181,7 +181,7 @@ export function fromNotion(raw, directories) {
   works.sort((a, b) => (b.number ?? -Infinity) - (a.number ?? -Infinity));
   const lives = active(raw.lives).map(page => {
     const p = page.properties;
-    return {id: cleanId(page.id), title: text(required(p, '直播场次', 'title')), date: required(p, '直播日期', 'date').date?.start?.slice(0, 10), replay: required(p, 'B站回放', 'url').url, programs: []};
+    return {id: cleanId(page.id), title: text(required(p, '直播场次', 'title')), date: required(p, '直播日期', 'date').date?.start?.slice(0, 10), programs: []};
   });
   const byId = new Map(lives.map(live => [live.id, live]));
   for (const page of active(raw.programs)) {

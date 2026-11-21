@@ -82,6 +82,12 @@ test('about page only exposes named sections and validates links', async () => {
 function notionFixture() {
   return {works:[{id:'w-1',properties:{'作品名称':field('title',rich('作品')), '封面':field('files',[]),'分类':field('select',{name:'综艺'}),'更新进度':field('rich_text',rich('已完结')),'B站Reaction合集':field('url','https://example.com/collection'),'网盘Reaction链接':field('url',null),'夸克网盘链接':field('url',null),'展示百度网盘':field('checkbox',false),'展示夸克网盘':field('checkbox',false)}}],lives:[{id:'l-1',properties:{'直播场次':field('title',rich('直播')),'直播日期':field('date',{start:'2026-10-28'}),'B站回放':field('url',null)}}],programs:[{id:'p-1',properties:{'视频标题':field('title',rich('节目')),'所属直播':field('relation',[{id:'l-1'}]),'关联作品':field('relation',[{id:'w-1'}]),'原视频':field('url','https://example.com/original'),'约时长（分钟）':field('number',5),'表内顺序':field('number',1),'推荐人':field('rich_text',rich('不公开'))}}]};
 }
+test('live records do not require per-session replay fields', () => {
+  const raw = notionFixture();
+  delete raw.lives[0].properties['B站回放'];
+  assert.equal(fromNotion(raw).data.lives[0].title, '直播');
+  assert.equal(fromNotion(raw).data.lives[0].programs[0].url, 'https://example.com/original');
+});
 test('directory links follow independent checkboxes', () => {
   const raw = notionFixture();
   const dirs = {baidu:'https://example.com/baidu',quark:'https://example.com/quark'};
