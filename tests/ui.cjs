@@ -183,9 +183,14 @@ server.stderr.on('data', chunk => process.stderr.write(chunk));
     for (const width of [1440, 390, 320]) {
       const aboutPage = await browser.newPage({viewport:{width,height:844}});
       await aboutPage.route('**/data.js',route=>route.fulfill({contentType:'application/javascript',body:`window.SITE_DATA=${JSON.stringify(mock)};`}));
+      await aboutPage.route('**/about.js', async route => {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        await route.continue();
+      });
       await aboutPage.goto(url,{waitUntil:'networkidle'});
       await aboutPage.getByRole('link',{name:'关于我们'}).click();
       assert.match(aboutPage.url(), /about\.html$/);
+      await aboutPage.locator('#about-intro').waitFor({state:'visible'});
       assert.equal(await aboutPage.locator('#about-intro').innerText(),'一起看');
       assert.equal(await aboutPage.locator('.about-avatar').getAttribute('src'),'media/avatar.png');
       assert.equal(await aboutPage.locator('.account-platform').innerText(),'小红书');
